@@ -4,8 +4,9 @@ import "@bulaa/ui/globals.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "Bulaa",
-  description: "Paid CS2 5v5 matchmaking — Mongolia",
+  title: "Bulaa — Paid CS2 5v5 Matchmaking",
+  description:
+    "Mongolia's paid CS2 5v5 matchmaking platform. Sign in with Steam, fund your MNT wallet, queue for fair matches, captain draft, and get paid out.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,19 +1,21 @@
-import { Button } from "@bulaa/ui";
-import { Crosshair } from "@phosphor-icons/react/dist/ssr";
+import { CtaSection } from "@/components/home/cta-section";
+import { FeaturesSection } from "@/components/home/features-section";
+import { HeroSection } from "@/components/home/hero-section";
+import { HowItWorksSection } from "@/components/home/how-it-works-section";
+import { SiteFooter } from "@/components/home/site-footer";
+import { SiteHeader } from "@/components/home/site-header";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-void px-6">
-      <p className="font-display text-4xl font-semibold tracking-tight text-text">
-        Bulaa
-      </p>
-      <p className="max-w-md text-center text-text-muted">
-        Paid CS2 5v5 matchmaking for Mongolia. Find Match.
-      </p>
-      <Button>
-        <Crosshair data-icon="inline-start" weight="bold" />
-        Find Match
-      </Button>
-    </main>
+    <div className="flex min-h-dvh flex-col">
+      <SiteHeader />
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <CtaSection />
+      </main>
+      <SiteFooter />
+    </div>
   );
 }
