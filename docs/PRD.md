@@ -260,8 +260,8 @@ All admin actions write to an immutable `admin_audit_log`.
 
 Recommendation (skipped by stakeholder, proposing default):
 
-- Frontend: Next.js (App Router) + React + Tailwind, deployed to Vercel or Mongolian hosting
-- Backend: Next.js API routes for thin endpoints + a separate Node service (NestJS or Fastify) for the matchmaking + draft WebSocket workloads
+- Frontend: Next.js app (`apps/front`) + React + Tailwind, deployed to Vercel or Mongolian hosting; admin web app deferred
+- Backend: Fastify app (`apps/backend`) — modular HTTP API (`/api/*`) + WebSockets (`/ws/*`) for queue/draft; front stays UI-focused with optional thin BFF routes
 - DB: Postgres (Supabase or managed) for relational data + ledger; Redis for queue state and pub/sub on draft events
 - Auth: Steam OpenID for primary login, Discord OAuth for optional link, SMS OTP for phone verification (Mongolian SMS provider TBD - flag)
 - Realtime: WebSockets for queue + draft, fall back to Server-Sent Events

@@ -1,0 +1,2 @@
+# Place React Bits components here via:
+# pnpm ui:add @react-bits/<component>

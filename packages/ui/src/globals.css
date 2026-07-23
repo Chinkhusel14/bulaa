@@ -1,0 +1,64 @@
+@import "@bulaa/design/tokens.css";
+
+@source "../../../apps/front/**/*.{ts,tsx}";
+@source "./**/*.{ts,tsx}";
+
+@import "tailwindcss";
+
+@theme inline {
+  --color-void: var(--bg-void);
+  --color-base: var(--bg-base);
+  --color-raised: var(--bg-raised);
+  --color-overlay: var(--bg-overlay);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-foreground: var(--on-primary);
+
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-money: var(--money);
+
+  --color-tier-pro: var(--tier-pro);
+  --color-tier-mid: var(--tier-mid);
+  --color-tier-low: var(--tier-low);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-base font-sans text-text antialiased;
+  }
+
+  .tabular-money {
+    color: var(--money);
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "bulaa",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @bulaa/db generate",
+    "db:migrate": "pnpm --filter @bulaa/db migrate",
+    "db:studio": "pnpm --filter @bulaa/db studio",
+    "ui:add": "pnpm --filter @bulaa/ui exec shadcn@latest add"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.2"
+  }
+}

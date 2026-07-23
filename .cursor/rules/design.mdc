@@ -1,0 +1,20 @@
+---
+description: Bulaa Clutch design system — use design tokens for all UI
+alwaysApply: true
+---
+
+# Design
+
+Product UI uses the **Clutch** design system only.
+
+- Spec sheet: `docs/design/DESIGN.md`
+- Runtime tokens: `@bulaa/design` (`packages/design`)
+
+Before building or changing any UI, page, email, or Discord embed:
+
+1. Read `docs/design/DESIGN.md`
+2. Import tokens from `@bulaa/design` and/or `@bulaa/design/tokens.css`
+3. Do not invent new palettes, fonts, or radii
+4. Dark mode only — no light/cream theme
+5. No casino copy or purple brand accents
+6. Money amounts use `colors.money` / `--money` with tabular figures

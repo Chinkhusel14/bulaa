@@ -1,0 +1,44 @@
+/**
+ * Bulaa — Clutch tokens
+ * Import once in the app root: import "@bulaa/design/tokens.css"
+ * Rules: see docs/design/DESIGN.md
+ */
+
+:root {
+  --bg-void: #070809;
+  --bg-base: #0c0e12;
+  --bg-raised: #14181f;
+  --bg-overlay: #1c222c;
+
+  --border: #2a3140;
+  --border-strong: #3d4658;
+
+  --text: #f4f6f8;
+  --text-muted: #8b93a7;
+  --text-faint: #5c6578;
+
+  --primary: #c8f542;
+  --primary-hover: #d6ff66;
+  --primary-pressed: #a8d12e;
+  --primary-muted: #c8f54226;
+  --on-primary: #0a0c08;
+
+  --accent: #6b9bff;
+  --success: #c8f542;
+  --warning: #ffc53d;
+  --danger: #ff3d4a;
+  --info: #6b9bff;
+  --money: #ffe66b;
+
+  --tier-pro: #c8f542;
+  --tier-mid: #6b9bff;
+  --tier-low: #8b93a7;
+
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 6px;
+
+  --font-display: "Chakra Petch", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}

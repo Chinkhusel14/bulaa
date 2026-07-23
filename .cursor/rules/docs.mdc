@@ -1,0 +1,13 @@
+---
+description: Read docs/ before building — PRD and design are source of truth
+alwaysApply: true
+---
+
+# Docs first
+
+Project source of truth lives in `docs/`. Before implementing or changing product behavior, UI, or architecture:
+
+1. Read the relevant file(s) under `docs/` (start with `docs/PRD.md` for product scope)
+2. Follow what those docs specify — do not invent conflicting product rules
+3. If docs and code disagree, ask clarification before implementing and flag the mismatch
+4. For UI, also follow the Design rule (`docs/design/DESIGN.md`, `@bulaa/design`)

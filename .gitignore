@@ -1,0 +1,27 @@
+# deps
+node_modules
+.pnpm-store
+
+# build
+dist
+.next
+.turbo
+out
+build
+*.tsbuildinfo
+
+# env
+.env
+.env*.local
+
+# tooling
+.DS_Store
+*.log
+coverage
+.vercel
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# drizzle
+drizzle/meta
