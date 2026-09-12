@@ -1,0 +1,25 @@
+ts	phase	decision	why	evidence	result
+2026-09-03T15:46:10Z	pickup	read prior transcripts instead of re-deriving the plan	session-pickup playbook says the trail is authoritative input; re-deriving wastes context	e8a6404a transcript, dfbef519 transcript	resume point identified: Feature step 4
+2026-09-03T15:46:10Z	pickup	confirmed branch cursor/auth-steam-phone is empty vs main	git status showed no modified/staged files, only untracked .cursor/skills/	git status -sb	no prior work to inherit
+2026-09-03T15:46:10Z	pickup	two poteto-agent spawns died with resource_exhausted before writing files	both bbc75ed2 and 0c414163 transcripts show error on first turn	bbc75ed2.jsonl, 0c414163.jsonl	decided to own the diff directly
+2026-09-03T15:46:10Z	shared	added account status enum, auth error codes, MN phone schema, EligibilityResult union to @bulaa/shared	plan requires these as the domain shapes before any module code	packages/shared/src/schemas/index.ts, packages/shared/src/constants/index.ts	types in place
+2026-09-03T15:46:10Z	db	extended users table with status enum, avatarUrl, phoneVerifiedAt, steam snapshot columns	plan specifies account_status state machine and steam data at the schema level	packages/db/src/schema/index.ts	schema updated
+2026-09-03T15:46:10Z	db	generated first Drizzle migration	no migrations existed; plan requires commit-ready SQL	packages/db/src/migrations/0000_yellow_hedge_knight.sql	drizzle-kit generate succeeded
+2026-09-03T15:46:10Z	backend	made DATABASE_URL and REDIS_URL required in env schema	they were optional, but auth needs both to function; fail-fast at boot	apps/backend/src/config/env.ts	SESSION_SECRET also required min 32 chars
+2026-09-03T15:46:10Z	backend	added db, redis, session plugins; wired into buildApp before modules	nothing connected to Postgres or Redis before; auth needs both plus cookies	apps/backend/src/plugins/db.ts, redis.ts, session.ts, src/app.ts	app.db and app.redis decorated
+2026-09-03T15:46:10Z	backend	set CORS credentials: true	cross-origin cookie auth between :3100 and :3101 requires it	apps/backend/src/plugins/cors.ts	one-line change
+2026-09-03T15:46:10Z	backend	wrote auth module with 6 routes replacing the {ready:false} stub	plan specifies steam redirect, callback, phone request/verify, me, logout	apps/backend/src/modules/auth/index.ts	routes match plan
+2026-09-03T15:46:10Z	backend	eligibility is a pure function with fail-closed union	plan requires no user row on failure, and no Fastify dependency in the check	apps/backend/src/modules/auth/eligibility.ts	6/6 tests pass
+2026-09-03T15:46:10Z	backend	OTP stored hashed in Redis only, never returned in HTTP	plan says OTP never in HTTP responses; HMAC-SHA256 with pepper	apps/backend/src/modules/auth/phone.ts	console SMS logs plaintext code to backend log only
+2026-09-03T15:46:11Z	backend	SmsSender port with console and callpro implementations	plan specifies the port pattern; callpro sends 8-digit national number	apps/backend/src/modules/auth/sms/	console is default in development
+2026-09-03T15:46:11Z	backend	added drizzle-orm as direct backend dependency	typecheck failed because authenticate.ts and auth/index.ts import eq from drizzle-orm	pnpm --filter @bulaa/backend add drizzle-orm	typecheck passes
+2026-09-03T15:46:11Z	frontend	header Steam button is now an <a> to API /api/auth/steam via asChild	plan says do not fetch OpenID start; top-level navigation sets the cookie	apps/front/components/home/site-header.tsx	signed-in state shows avatar + logout
+2026-09-03T15:46:11Z	frontend	wrote /auth/phone page with two-step MN input + OTP	plan specifies MN primary + EN subtitle, 8-digit input + 6-digit code	apps/front/app/auth/phone/page.tsx	uses Clutch tokens, dark only
+2026-09-03T15:46:11Z	frontend	wrote /auth/error page mapping eligibility codes to bilingual messages	plan specifies danger token, mapped messages, no casino copy	apps/front/app/auth/error/page.tsx	6 error codes covered
+2026-09-03T15:46:11Z	frontend	added credentials:include fetch helper and useAuth hook	cross-origin cookie auth requires credentials on every fetch	apps/front/lib/api.ts, apps/front/lib/use-auth.ts	TanStack Query wired
+2026-09-03T15:46:11Z	verify	all 6 eligibility tests pass	ran pnpm --filter @bulaa/backend test	terminal output: 6 pass, 0 fail	tests green
+2026-09-03T15:46:11Z	verify	backend typecheck passes	ran pnpm --filter @bulaa/backend typecheck	tsc --noEmit exits 0	tests green
+2026-09-03T15:46:11Z	verify	frontend typecheck passes	ran pnpm --filter @bulaa/front typecheck	tsc --noEmit exits 0	tests green
+2026-09-03T15:46:11Z	verify	browser and API runtime verification not yet done	Feature step 5 is pending; needs docker compose up for Postgres/Redis	n/a	open
+2026-09-03T15:49:05Z	audit	cross-model review completed by gpt-5.6-sol-medium	show-me-your-work skill requires a different model family to review the trail	53c93d23 subagent output	11 flags raised, see Attention section
+2026-09-03T15:49:05Z	audit	self-audit confirmed all 22 rows map to real actions in transcript	walked e8bfcebb transcript against the log	e8bfcebb transcript	no fabricated entries found

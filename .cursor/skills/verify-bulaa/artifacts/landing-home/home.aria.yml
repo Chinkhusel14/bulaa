@@ -1,0 +1,44 @@
+url: http://127.0.0.1:13100/
+title: Bulaa — Paid CS2 5v5 Matchmaking
+- role: document
+  name: Bulaa — Paid CS2 5v5 Matchmaking
+  children:
+    - role: link
+      name: Bulaa
+    - role: link
+      name: Онцлог Features
+    - role: link
+      name: Яаж ажилладаг How it works
+    - role: button
+      name: Steam-ээр нэвтрэх
+    - role: button
+      name: Find Match
+    - role: link
+      name: Яаж ажилладаг вэ?
+    - role: button
+      name: Find Match
+    - role: link
+      name: Design system
+    - role: link
+      name: Features
+    - role: link
+      name: How it works
+    - role: navigation
+      name: Main
+    - role: heading
+      name: Төлбөртэй 5v5 matchmaking.
+      level: 1
+    - role: heading
+      name: Discord-оос платформ руу
+      level: 2
+    - role: heading
+      name: Тоглолт хүртэл 5 алхам
+      level: 2
+    - role: heading
+      name: Бэлэн үү?
+      level: 2
+    - name: ₮ 55,000
+    - name: ₮ 500,000
+    - name: ₮ 100,000
+    - role: navigation
+      name: Footer

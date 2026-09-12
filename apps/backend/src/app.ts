@@ -13,8 +13,17 @@ import {
   walletModule,
 } from "./modules";
 import { registerCors } from "./plugins/cors";
+import { registerDb } from "./plugins/db";
+import { registerRedis } from "./plugins/redis";
+import { registerSession } from "./plugins/session";
 import { registerWebsocket } from "./plugins/websocket";
 import { registerRealtime } from "./realtime";
+
+declare module "fastify" {
+  interface FastifyInstance {
+    env: Env;
+  }
+}
 
 export async function buildApp(env: Env) {
   const app = Fastify({
@@ -23,9 +32,13 @@ export async function buildApp(env: Env) {
     },
   });
 
+  app.decorate("env", env);
   app.setErrorHandler(errorHandler);
 
+  await registerDb(app, env);
+  await registerRedis(app, env);
   await registerCors(app, env);
+  await registerSession(app, env);
   await registerWebsocket(app);
 
   await app.register(healthModule);
