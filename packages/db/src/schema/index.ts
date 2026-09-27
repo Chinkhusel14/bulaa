@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -69,3 +70,48 @@ export const ledgerEntries = pgTable("ledger_entries", {
     .defaultNow()
     .notNull(),
 });
+
+export const lobbyStatusEnum = pgEnum("lobby_status", [
+  "open",
+  "starting",
+  "awaiting_server",
+  "live",
+  "awaiting_result",
+  "completed",
+  "cancelled",
+  "disputed",
+]);
+
+export const lobbies = pgTable("lobbies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  hostUserId: uuid("host_user_id")
+    .notNull()
+    .references(() => users.id),
+  status: lobbyStatusEnum("status").notNull().default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const lobbyMembers = pgTable(
+  "lobby_members",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    lobbyId: uuid("lobby_id")
+      .notNull()
+      .references(() => lobbies.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    seat: integer("seat").notNull(),
+    ready: boolean("ready").notNull().default(false),
+    seatedAt: timestamp("seated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    unique("lobby_members_lobby_user_unique").on(t.lobbyId, t.userId),
+    unique("lobby_members_lobby_seat_unique").on(t.lobbyId, t.seat),
+  ],
+);

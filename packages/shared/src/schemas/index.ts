@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOBBY_NAME_MAX_LENGTH } from "../constants/index";
 
 export const steamIdSchema = z
   .string()
@@ -79,3 +80,42 @@ export interface SteamSnapshot {
 export type EligibilityResult =
   | { ok: true; snapshot: SteamSnapshot }
   | { ok: false; code: z.infer<typeof authErrorCodeSchema> };
+
+export const createLobbySchema = z.object({
+  name: z.string().trim().min(1).max(LOBBY_NAME_MAX_LENGTH),
+});
+
+export type CreateLobbyInput = z.infer<typeof createLobbySchema>;
+
+export type TierBand = "pro" | "mid" | "low";
+
+export interface LobbySummary {
+  id: string;
+  name: string;
+  hostDisplayName: string;
+  hostTier: string;
+  hostTierBand: TierBand;
+  occupancy: number;
+  readyCount: number;
+  averageTier: string;
+  averageTierBand: TierBand;
+  createdAt: string;
+}
+
+export type LobbyRole = "host" | "member";
+
+export interface LobbyViewer {
+  balanceMnt: number;
+  lobbyId: string | null;
+  role: LobbyRole | null;
+}
+
+export interface LobbyListResponse {
+  lobbies: LobbySummary[];
+  viewer: LobbyViewer;
+}
+
+export interface LobbySnapshotMessage {
+  type: "snapshot";
+  lobbies: LobbySummary[];
+}

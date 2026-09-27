@@ -1,6 +1,6 @@
 import { users } from "@bulaa/db";
 import { eq } from "drizzle-orm";
-import type { FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyRequest } from "fastify";
 import { AppError } from "../../lib/errors";
 
 declare module "fastify" {
@@ -9,10 +9,8 @@ declare module "fastify" {
   }
 }
 
-export async function authenticate(
-  request: FastifyRequest,
-  reply: FastifyReply,
-): Promise<void> {
+/** Loads the session user and keeps the session for banned users, who may still read. */
+export async function loadSessionUser(request: FastifyRequest): Promise<void> {
   const userId = request.session.get("userId");
   if (!userId) throw new AppError("Unauthenticated", 401, "unauthenticated");
 
@@ -27,10 +25,14 @@ export async function authenticate(
     throw new AppError("Unauthenticated", 401, "unauthenticated");
   }
 
-  if (user.status === "banned") {
+  request.user = user;
+}
+
+export async function authenticate(request: FastifyRequest): Promise<void> {
+  await loadSessionUser(request);
+
+  if (request.user.status === "banned") {
     request.session.delete();
     throw new AppError("Account banned", 403, "unauthenticated");
   }
-
-  request.user = user;
 }

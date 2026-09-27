@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/modules/auth/eligibility.test.ts"
+    "test": "tsx --test src/modules/auth/eligibility.test.ts src/modules/lobby/rules.test.ts"
   },
   "dependencies": {
     "@bulaa/db": "workspace:*",

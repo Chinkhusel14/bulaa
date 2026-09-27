@@ -49,3 +49,27 @@ export const ACCOUNT_STATUSES = [
 ] as const;
 
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
+
+/** Wallet balance required to create or join a lobby (MNT). */
+export const LOBBY_ENTRY_MNT = 55_000;
+
+export const LOBBY_SEAT_COUNT = 10;
+
+export const LOBBY_NAME_MAX_LENGTH = 32;
+
+/** Redis pub/sub channel carrying the open lobby list. */
+export const LOBBIES_OPEN_CHANNEL = "lobbies:open";
+
+export const LOBBY_ERROR_CODES = [
+  "unauthenticated",
+  "banned",
+  "phone_required",
+  "insufficient_balance",
+  "already_in_lobby",
+  "lobby_full",
+  "lobby_closed",
+  "not_in_lobby",
+  "invalid_name",
+] as const;
+
+export type LobbyErrorCode = (typeof LOBBY_ERROR_CODES)[number];

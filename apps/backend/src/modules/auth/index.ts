@@ -3,7 +3,7 @@ import { phoneRequestSchema, phoneVerifySchema } from "@bulaa/shared";
 import { eq } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { AppError } from "../../lib/errors";
-import { authenticate } from "./authenticate";
+import { authenticate, loadSessionUser } from "./authenticate";
 import { checkEligibility } from "./eligibility";
 import {
   canSendOtp,
@@ -94,9 +94,9 @@ export const authModule: FastifyPluginAsync = async (app) => {
         })
         .where(eq(users.id, existing.id));
 
-      if (existing.status === "active") {
+      if (existing.status !== "pending_phone") {
         request.session.set("userId", userId);
-        return reply.redirect(env.FRONT_URL);
+        return reply.redirect(`${env.FRONT_URL}/play`);
       }
     } else {
       const [newUser] = await app.db.transaction(async (tx) => {
@@ -198,7 +198,7 @@ export const authModule: FastifyPluginAsync = async (app) => {
 
   app.get(
     "/auth/me",
-    { preHandler: [authenticate] },
+    { preHandler: [loadSessionUser] },
     async (request) => {
       const u = request.user;
       return {

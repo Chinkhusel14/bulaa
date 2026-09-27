@@ -2,7 +2,7 @@
 
 import { Button } from "@bulaa/ui";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api";
 import { useAuth } from "../../../lib/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,13 +17,13 @@ export default function PhoneVerifyPage() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  if (isLoading) return null;
-  if (!user) {
-    router.replace("/");
-    return null;
-  }
-  if (user.status === "active") {
-    router.replace("/");
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) router.replace("/");
+    else if (user.status !== "pending_phone") router.replace("/play");
+  }, [isLoading, user, router]);
+
+  if (isLoading || !user || user.status !== "pending_phone") {
     return null;
   }
 
@@ -54,7 +54,7 @@ export default function PhoneVerifyPage() {
         body: JSON.stringify({ phone: e164, code }),
       });
       await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
-      router.replace("/");
+      router.replace("/play");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Алдаа гарлаа");
     } finally {

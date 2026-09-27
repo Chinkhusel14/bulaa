@@ -6,6 +6,7 @@ import {
   authModule,
   draftModule,
   healthModule,
+  lobbyModule,
   matchModule,
   paymentsModule,
   queueModule,
@@ -45,6 +46,7 @@ export async function buildApp(env: Env) {
   await app.register(authModule, { prefix: "/api" });
   await app.register(usersModule, { prefix: "/api" });
   await app.register(walletModule, { prefix: "/api" });
+  await app.register(lobbyModule, { prefix: "/api" });
   await app.register(paymentsModule, { prefix: "/api" });
   await app.register(matchModule, { prefix: "/api" });
   await app.register(queueModule, { prefix: "/api" });
