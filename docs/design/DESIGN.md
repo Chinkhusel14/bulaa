@@ -9,7 +9,7 @@
 | Brand system | Clutch |
 | Product name | Bulaa |
 | Mode | Dark only (no light theme in MVP) |
-| Tone | Competitive FPS / paid 5v5 matchmaking — fierce, not casino |
+| Tone | Competitive FPS, paid 5v5 lobbies. Fierce, not casino. |
 
 ## Source of truth
 
@@ -29,8 +29,9 @@ import "@bulaa/design/tokens.css";
 
 ## Personality (copy & UI)
 
-- Short, imperative: “Find Match.” “Your pick.” “Server ready.”
-- Prefer: entry, prize pool, payout, draft, escrow
+- Short, imperative: "Play." "Join." "Ready." "Start." "Server ready."
+- Prefer: lobby, seat, host, entry, prize pool, payout, escrow, vote kick
+- Do not use as primary verbs: Find Match, Your pick, draft
 - Avoid casino words: jackpot, bet, spin, odds
 - MN + EN; Cyrillic must render correctly (IBM Plex / Chakra Petch)
 
@@ -47,14 +48,14 @@ import "@bulaa/design/tokens.css";
 | `text` | `#F4F6F8` | Primary copy |
 | `textMuted` | `#8B93A7` | Labels, secondary |
 | `textFaint` | `#5C6578` | Placeholders, disabled |
-| `primary` | `#C8F542` | CTA, active queue, brand accent |
+| `primary` | `#C8F542` | CTA, Ready state, brand accent |
 | `primaryHover` | `#D6FF66` | Primary hover |
 | `primaryPressed` | `#A8D12E` | Primary active |
 | `primaryMuted` | `#C8F54226` | Soft selection fills |
 | `onPrimary` | `#0A0C08` | Text/icons on primary buttons |
 | `accent` | `#6B9BFF` | Links, secondary actions |
 | `success` | `#C8F542` | Win, payout credit |
-| `warning` | `#FFC53D` | Draft timer, escrow hold |
+| `warning` | `#FFC53D` | Vote-kick countdown, escrow hold |
 | `danger` | `#FF3D4A` | Loss, ban, destructive |
 | `info` | `#6B9BFF` | Neutral system notices |
 | `money` | `#FFE66B` | Wallet / MNT amounts only |
@@ -87,11 +88,11 @@ Google Fonts query (in `tokens.ts` as `fonts.googleFamilies`):
 
 | Token | ms | Use |
 |---|---|---|
-| `pickSnap` | 120 | Draft selection snap |
-| `pickFlash` | 200 | Lime flash on pick |
+| `pickSnap` | 120 | Seat and side selection snap |
+| `pickFlash` | 200 | Lime flash on Ready |
 | `fade` | 150 | Generic fade |
 
-Draft timer: use `warning` at ≤10s, `danger` at ≤5s (`timer` in `tokens.ts`).
+Countdowns such as the 30s vote-kick window use `warning` at 10s or less and `danger` at 5s or less (`timer` in `tokens.ts`).
 
 ## Hard rules (do not break)
 
@@ -105,4 +106,10 @@ Draft timer: use `warning` at ≤10s, `danger` at ≤5s (`timer` in `tokens.ts`)
 
 ## Product surfaces to style with these tokens
 
-Auth, wallet/deposit, queue, captain draft, match lobby, result/payout, leaderboard/profile, admin panel, Discord bot embeds (map embed accent → `primary`).
+In play order: auth, wallet and deposit, the Play lobby browser, the lobby room (roster, chat, Ready, vote kick), match and server info, result and payout, leaderboard and profile, admin panel, Discord bot embeds (map embed accent to `primary`).
+
+Lobby browser specifics:
+
+- Average rank on a lobby card is a tier badge with a left accent bar, using `tierPro` / `tierMid` / `tierLow`
+- Occupancy and ready counts are mono with tabular nums, same treatment as IDs
+- One primary CTA per view. Join on the browser, Ready in the room, Start for the host only.

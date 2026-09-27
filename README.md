@@ -1,6 +1,6 @@
 # Bulaa
 
-Paid CS2 5v5 matchmaking for Mongolia.
+Paid CS2 5v5 lobbies for Mongolia. Players create and join a lobby, ready up, play, and get paid out.
 
 ## Monorepo
 
@@ -11,8 +11,8 @@ apps/
     src/
       config/          env
       plugins/         cors, websocket, …
-      modules/         auth, users, wallet, payments, match, queue, draft, admin
-      realtime/        /ws/queue, /ws/draft
+      modules/         auth, users, wallet, payments, match, lobby, admin
+      realtime/        /ws/lobbies, /ws/lobby/:id
       lib/             shared server helpers
 packages/
   design/              Clutch tokens (@bulaa/design)
@@ -35,7 +35,7 @@ docs/
 | Backend | Fastify (REST under `/api` + WS under `/ws`)     |
 | UI      | shadcn (new-york), Phosphor, React Bits registry |
 | Data    | TanStack Query / Table / Form, Zod               |
-| DB      | Postgres + Drizzle, Redis (queue/pubsub)         |
+| DB      | Postgres + Drizzle, Redis (lobby state, pub/sub) |
 
 
 ## Setup

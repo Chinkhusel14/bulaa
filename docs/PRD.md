@@ -1,6 +1,6 @@
 ---
-name: CS2 paid matchmaking PRD
-overview: Product Requirements Document for a Mongolia-focused web platform that replaces the current Discord-admin-driven CS2 5v5 paid matchmaking flow with an automated wallet, matchmaking queue, captain-draft, and server-allocation system, while keeping result verification admin-assisted in MVP.
+name: CS2 paid lobby PRD
+overview: Product Requirements Document for a Mongolia-focused web platform where CS2 players create and join paid 5v5 lobbies, ready up together, and get paid out of an automated MNT wallet, while result verification stays admin-assisted in MVP.
 todos:
   - id: resolve_legal
     content: Resolve R1 - engage Mongolian lawyer to confirm legal positioning, KYC level, age-gate, and tax obligations before public launch
@@ -17,14 +17,20 @@ todos:
   - id: build_wallet_payments
     content: Build MNT wallet with double-entry ledger, QPay deposit + webhook idempotency, escrow hold/capture/release, payout flow
     status: pending
-  - id: build_matchmaking
-    content: Build continuous MMR-based queue with solo/duo/trio, expanding tolerance, accept window
+  - id: build_lobby_browser
+    content: Build the lobby browser - list, create, join, occupancy n/10, ready count, average displayed tier
     status: pending
-  - id: build_captain_draft
-    content: Build live WebSocket captain draft with 30s per-pick timer, auto-pick fallback, and duo/trio draft-advantage rule
+  - id: build_lobby_ready
+    content: Build the lobby room - 10 seats, Team A/Team B sides, Ready toggle, host Start, host transfer
+    status: pending
+  - id: build_lobby_chat
+    content: Build member-only lobby text chat with rate limiting and freeze on match start
+    status: pending
+  - id: build_vote_kick
+    content: Build vote kick with majority threshold, 30s window, per-target cooldown, escrow release, host transfer
     status: pending
   - id: build_match_lifecycle
-    content: Build match state machine, manual server-allocation admin UI, captain score submission, admin confirm + auto-payout
+    content: Build match state machine, manual server-allocation admin UI, per-side score submission, admin confirm + auto-payout
     status: pending
   - id: build_skill_rating
     content: Build hybrid skill rating - admin-assigned initial tier, post-match ELO update, tier hysteresis, dispute tickets
@@ -47,17 +53,19 @@ todos:
 isProject: false
 ---
 
-# CS2 Paid Matchmaking Platform - PRD (MVP v1.0)
+# Bulaa paid 5v5 lobbies PRD (MVP v1.0)
 
 ## 1. Summary
 
-A web platform that lets Mongolian CS2 players sign in with Steam, deposit MNT into a wallet, queue for 5v5 paid competitive matches, get drafted by captains, play on Mongolia-hosted custom CS2 servers, and receive payouts automatically into their wallet. Replaces the current manual Discord + admin transfer workflow.
+A web platform that lets Mongolian CS2 players sign in with Steam, deposit MNT into a wallet, open Play to browse player-made lobbies, join one of 10 seats, ready up, play on Mongolia-hosted custom CS2 servers, and receive payouts automatically into their wallet. Replaces the current manual Discord + admin transfer workflow.
 
 - Target launch: 2-3 months
 - Geography: Mongolia only, MNT currency
 - Initial scale: 5-8 matches/day growing to 20+/day
-- Automation in MVP: payments, queue, draft, server allocation (manual contracting), wallet, payout trigger
+- Automation in MVP: payments, lobbies, ready and start, server allocation (manual contracting), wallet, payout trigger
 - Still admin-assisted in MVP: match result confirmation, server contracting, dispute review
+
+Players run the lobbies. The platform holds the money, shows each lobby's average rank, gives members a chat to sort out teams, and lets members vote out anyone who blocks the start.
 
 ## 2. Goals and Non-Goals
 
@@ -65,7 +73,10 @@ A web platform that lets Mongolian CS2 players sign in with Steam, deposit MNT i
 
 - Eliminate manual money transfers between players and admins
 - Cut admin workload per match by >70% vs. current Discord flow
-- Preserve the captain-draft ritual and duo/trio draft-advantage rule the community already loves
+- Let players run their own lobbies instead of waiting on a system to group them
+- Show each lobby's average rank so a player can judge the match before joining
+- Give every lobby a chat so members can balance teams themselves
+- Let members vote out a player who sits not-Ready and blocks the start
 - Make skill rating transparent and self-correcting via hybrid Admin-tier + ELO
 - Build the data foundation (matches, results, ratings, wallet, behavior score) needed to automate result verification and payouts in v2
 
@@ -82,16 +93,16 @@ A web platform that lets Mongolian CS2 players sign in with Steam, deposit MNT i
 
 These three items materially affect product viability and must be tracked as blocking issues, not assumptions.
 
-- **R1 - Legal positioning**: Paid skill-based CS2 matches with real-cash payouts may be classified as gambling under Mongolian law. The MVP assumes "skill-based gaming with entry fee + prize pool, light KYC" but this must be reviewed by a Mongolian lawyer before public launch. If reclassified as gambling, KYC, age-gate, licensing, and tax-withholding requirements all increase substantially.
-- **R2 - Mongolia-hosted CS2 server supply**: 0 ping is a hard requirement. Today no provider/strategy has been chosen. MVP will manually contract with current Mongolian server operators; v2 will automate via provider API. This is a single point of failure that must be solved before MVP launch.
-- **R3 - Automated result verification**: MVP relies on admin confirming the winner. As volume grows past ~20 matches/day this becomes the bottleneck. v2 must add automated detection (CS2 GSI or RCON via Get5/MatchZy plugin) - flagged as the highest-priority post-MVP work.
+- **R1 Legal positioning.** Paid skill-based CS2 matches with real-cash payouts may be classified as gambling under Mongolian law. The MVP assumes "skill-based gaming with entry fee + prize pool, light KYC" but this must be reviewed by a Mongolian lawyer before public launch. If reclassified as gambling, KYC, age-gate, licensing, and tax-withholding requirements all increase substantially.
+- **R2 Mongolia-hosted CS2 server supply.** 0 ping is a hard requirement. Today no provider or strategy has been chosen. MVP will manually contract with current Mongolian server operators. v2 will automate via provider API. This is a single point of failure that must be solved before MVP launch.
+- **R3 Automated result verification.** MVP relies on admin confirming the winner. As volume grows past ~20 matches/day this becomes the bottleneck. v2 must add automated detection, either CS2 GSI or RCON via the Get5 or MatchZy plugin. Flagged as the highest-priority post-MVP work.
 
 ## 4. Personas
 
-- **Solo Player (Бат)**: Lower-group player, queues alone at night, wants quick matches and fair teams
-- **Stack Player (Ану + 2 нөхөр)**: Upper-group player, queues as duo/trio with friends, expects opposing team gets draft compensation
-- **Captain**: Top-rated player drafted as captain, picks teammates under a timer
-- **Match Admin**: Confirms winner, handles in-match disputes, sub-ins players
+- **Solo Player (Бат)**: Lower-group player, plays at night, scans the lobby list by average rank and joins one that looks fair
+- **Stack Player (Ану + 2 нөхөр)**: Upper-group player, creates a lobby or joins one with friends, sorts out sides in lobby chat
+- **Host**: The player who created the lobby. Assigns Team A and Team B, and presses Start once all 10 seats are Ready. Not a skill role
+- **Match Admin**: Confirms winner, handles in-match disputes, subs in players, closes abusive lobbies
 - **Finance Admin**: Approves manual deposits (edge cases), triggers payouts, reviews refund tickets
 - **Super Admin**: Manages roles, server contracts, system config
 
@@ -101,13 +112,16 @@ These three items materially affect product viability and must be tracked as blo
 flowchart TD
     SignUp[Sign in with Steam + Verify Phone] --> KYC[Admin assigns initial skill tier]
     KYC --> Deposit[Deposit MNT to Wallet via QPay]
-    Deposit --> Queue[Click Find Match - Solo/Duo/Trio]
-    Queue --> Matched["10 players matched by MMR"]
-    Matched --> EscrowHold[Wallet locks 50k entry + 5k server fee per player]
-    EscrowHold --> Draft[Live 30s-per-pick captain draft]
-    Draft --> ServerReady[Admin allocates Mongolian CS2 server, posts connect info]
+    Deposit --> Play[Click Play - lobby browser]
+    Play --> Pick["Browse lobbies by average rank, or create one"]
+    Pick --> Join["Join a seat - wallet locks 50k entry + 5k server fee"]
+    Join --> Lobby["Chat, take a side, press Ready"]
+    Lobby --> AllReady["10/10 Ready and 5+5 sides"]
+    AllReady --> Start[Host presses Start]
+    Start --> ServerReady[Admin allocates Mongolian CS2 server, posts connect info]
     ServerReady --> Match[Players play 5v5 match]
-    Match --> AdminConfirm[Admin confirms winner]
+    Match --> Scores[Each side submits the final score]
+    Scores --> AdminConfirm[Admin confirms winner]
     AdminConfirm --> Payout[Winners credited 100k MNT to wallet]
     Payout --> Withdraw[Player withdraws to QPay/bank when ready]
 ```
@@ -123,72 +137,112 @@ flowchart TD
   - Have no active VAC or game ban on CS2
   - Be at least N days old (default 90, configurable by Super Admin)
   - Have at least X hours played in CS2 (default 100, configurable)
-- Optional Discord OAuth link to enable role sync and queue notifications via Discord bot.
+- Optional Discord OAuth link to enable role sync and lobby notifications via Discord bot.
 - Account states: `pending_phone`, `active`, `restricted` (behavior score too low), `banned`.
 
 ### 6.2 Wallet and Payments
 
 - Each user has a single MNT wallet (signed integer cents to avoid float).
-- Wallet operations: `deposit`, `withdraw`, `escrow_hold`, `escrow_release`, `escrow_capture`, `payout_credit`, `refund`, `admin_adjustment` - each is an immutable ledger entry.
-- Deposits via QPay (primary). Recommend adding SocialPay + Khan Bank API + manual bank transfer (admin-confirmed) as fallbacks - flag for stakeholder confirmation.
+- Wallet operations: `deposit`, `withdraw`, `escrow_hold`, `escrow_release`, `escrow_capture`, `payout_credit`, `refund`, `admin_adjustment`. Each one is an immutable ledger entry.
+- Deposits via QPay (primary). Recommend adding SocialPay + Khan Bank API + manual bank transfer (admin-confirmed) as fallbacks. Flag for stakeholder confirmation.
 - Withdrawals: player initiates, instant if same payment provider used to deposit, manual review for cross-channel or >threshold amounts.
 - Per-match flow:
-  1. On queue join, verify `wallet.available_balance >= 55,000 MNT`
-  2. On match found (10 players matched), atomically `escrow_hold(55,000)` for each player
-  3. If any player's hold fails, the queue retries that slot; affected player gets a "balance dropped" notification
-  4. On admin-confirmed result: `escrow_capture(55,000)` for all 10, then `payout_credit(100,000)` to each of the 5 winners
+  1. Before a player creates or joins a lobby, verify `wallet.available_balance >= 55,000 MNT`
+  2. On a successful join, `escrow_hold(55,000)` for that player
+  3. If the hold fails, deny the join and tell the player their balance dropped
+  4. When a player leaves, or a vote kick removes them, `escrow_release(55,000)`
+  5. On Start, all 10 holds stay in place until the result is settled
+  6. On admin-confirmed result: `escrow_capture(55,000)` for all 10, then `payout_credit(100,000)` to each of the 5 winners
 - Limits (configurable, sensible defaults):
   - Min deposit: 10,000 MNT
   - Max deposit per day: 2,000,000 MNT (KYC tier 1)
   - Max withdrawal per day: 1,000,000 MNT (KYC tier 1)
 - Server fee accounting: 5,000 MNT/player x 10 = 50,000 MNT/match goes to a dedicated `server_cost` ledger account, used to reconcile against the monthly server contract.
 
-### 6.3 Matchmaking Queue
+### 6.3 Lobby browser, create, and join
 
-- **Continuous matchmaking** model. Player clicks Find Match, picks Solo/Duo/Trio, queue holds them until 10 are matched.
-- Matching algorithm groups by MMR within an expanding tolerance window (start +/- 100, widens every 30s).
-- Party support:
-  - Solo, Duo (party of 2), Trio (party of 3) allowed. Quads and 5-stacks blocked in MVP.
-  - If a duo or trio is matched, the side without the party gets **draft-pick advantage** (first 3 picks before alternating) - mirrors current Discord rule.
-- Each player can only be in one queue at a time.
-- Queue cancellation: free if not yet matched, costs nothing; after match is found there is a 60s accept window - failing to accept = behavior score penalty.
+- Play opens a list of open lobbies. Players create the lobbies. The platform does not group players.
+- Each lobby card shows:
+  - Lobby name
+  - Host name and host tier
+  - Occupancy as `n/10`
+  - Ready count as `n/10`
+  - Average displayed tier, the mean of the seated members' tiers. An empty lobby shows the host tier
+  - Lobby age since creation
+- Average rank is information for the joiner. It is not a hard join gate.
+- Optional soft warning: if the joiner's tier sits far from the lobby average, the join dialog says so. The gap that triggers the warning is configurable and it never blocks the join.
+- The list updates live. A new lobby, a seat change, and a closed lobby all appear without a page reload.
+- Create a lobby: any `active` player with `wallet.available_balance >= 55,000 MNT`. The creator becomes the host.
+- Join a lobby: same balance and account-state check. Join is blocked once 10 seats are taken.
+- A player can be in one lobby at a time. Creating or joining a second one is blocked until they leave the first.
+- Leaving is free while the lobby is `open`. The seat reopens and escrow is released.
+- If the host leaves, the longest-seated remaining member becomes host. If the last member leaves, the lobby closes.
 
-### 6.4 Captain Draft
+### 6.4 Lobby room, sides, Ready, and Start
 
-- The two highest-MMR players among the 10 are captains.
-- Live in-browser draft using WebSockets:
-  - 30s timer per pick, auto-pick (highest-MMR remaining) if timer expires
-  - Both captains and 8 other players see the draft board in real time
-  - Captain A picks first, then alternating, except if duo/trio is on one side - other side gets first 3 picks then alternates
-- After draft, lobby screen shows teams, connect-info appears once admin allocates a server.
+- The lobby room shows all 10 seats, each with the player name and displayed tier, the current sides, and who is Ready.
+- Players sort out teams themselves. Chat is the coordination tool (6.5).
+- The host can assign each member to Team A or Team B. Sides are valid at 5 and 5.
+- Each seated player toggles Ready. A player can go back to not-Ready at any time before Start.
+- Host Start is enabled only when all three hold:
+  1. 10 seats are taken
+  2. All 10 seated players are Ready
+  3. Sides are 5 and 5
+- The host is the only player who can press Start. Auto-start is out of MVP.
+- If the lobby has been at 10/10 Ready for longer than the idle limit (default 3 minutes, configurable) and the host has not pressed Start, the host seat transfers to the longest-seated member. Members can also vote the host out (6.6).
+- On Start the lobby moves to `starting`, then to `awaiting_server` (6.7). Seats, sides, and Ready flags are frozen from `starting` onward.
 
-### 6.5 Server Allocation and Match Lifecycle (MVP: manual)
+### 6.5 Lobby chat
 
-- MVP: admin sees a list of "matches ready for server" and assigns one of the contracted Mongolian CS2 servers; pastes connect info (`ip:port` and password) into the match.
-- Match state machine: `queueing` -> `drafting` -> `awaiting_server` -> `live` -> `awaiting_result` -> `completed` | `cancelled` | `disputed`.
-- Each match has: roster (10 players + 2 captains), team assignments, server info, start time, expected duration (~60 min), and a unique `match_id`.
-- v2: integrate with Mongolian server provider API to spin up servers + apply config + push roster automatically.
+- Every lobby has one text chat. Only seated members can read and post.
+- Chat exists for the coordination work: calling sides, swapping players to balance tiers, agreeing on a map, waiting on a friend.
+- Rate limit per player (configurable defaults): 5 messages per 10 seconds, 300 characters per message.
+- No in-platform voice in MVP. Players keep using Discord voice.
+- Messages persist while the lobby is `open`. When the lobby closes, the messages are deleted. When the match goes live, the chat freezes and the transcript moves to the match log for dispute review.
 
-### 6.6 Result Confirmation and Payout (MVP: admin-assisted)
+### 6.6 Vote kick
 
-- After match end, both captains submit final score in the platform.
-- If scores agree -> admin reviews + clicks Confirm -> automatic payout.
-- If scores disagree or anyone files a dispute -> moves to `disputed` state, admin reviews evidence (GOTV demo link, screenshots) and decides.
-- Auto-confirm safety: admin must confirm within 24h or the match is auto-escalated to Super Admin.
+Some players take a seat and never press Ready, which blocks the other 9. Vote kick is the members' own fix.
+
+- Any seated member can start a vote against one other seated member.
+- A vote needs at least 3 members in the lobby. Below that, vote kick is unavailable.
+- Threshold: a majority of current members excluding the target, `ceil((n-1)/2)+1` yes votes.
+- The vote window is 30 seconds. A vote that misses the threshold in the window fails.
+- One active vote at a time per lobby. Cooldown of 2 minutes per target after a failed or successful vote.
+- On success: the target loses their seat, `escrow_release(55,000)` runs, and the seat reopens.
+- If the target sat not-Ready for more than 2 minutes before the vote passed, their behavior score takes a small hit (6.11).
+- If the target was the host, the host seat transfers to the longest-seated remaining member.
+- A kicked player can join another lobby right away.
+- Vote kick is only available while the lobby is `open`. After Start, a missing player is a no-show and a Match Admin handles it.
+
+### 6.7 Server Allocation and Match Lifecycle (MVP: manual)
+
+- MVP: admin sees a list of matches waiting for a server and assigns one of the contracted Mongolian CS2 servers, then pastes connect info (`ip:port` and password) into the match.
+- Lobby and match state machine: `open` -> `starting` -> `awaiting_server` -> `live` -> `awaiting_result` -> `completed` | `cancelled` | `disputed`.
+- Ready is a flag on each lobby member while the lobby is `open`. It is not a state of the lobby.
+- Each match has: roster of 10 players, team assignments, host, server info, start time, expected duration (~60 min), and a unique `match_id`.
+- v2: integrate with Mongolian server provider API to spin up servers, apply config, and push the roster automatically.
+
+### 6.8 Result Confirmation and Payout (MVP: admin-assisted)
+
+- After the match ends, each side submits the final score in the platform. Any seated player on that side can submit it, and the first submission per side counts.
+- If the two scores agree, an admin reviews and clicks Confirm, then payout runs automatically.
+- If the scores disagree, or anyone files a dispute, the match moves to `disputed`. An admin reviews the evidence (GOTV demo link, screenshots, lobby chat transcript) and decides.
+- Auto-confirm safety: an admin must confirm within 24h or the match is auto-escalated to Super Admin.
 - **v2 (post-MVP, flagged as highest priority follow-up)**: automated result detection via:
-  - Option A - CS2 GSI: server pushes match events directly to platform endpoint
-  - Option B - RCON polling with Get5 or MatchZy plugin reporting final score on `cs2_server_event`
-  - Either eliminates the captain-confirms step and the admin click
+  - Option A, CS2 GSI. The server pushes match events directly to a platform endpoint
+  - Option B, RCON polling with the Get5 or MatchZy plugin reporting the final score on `cs2_server_event`
+  - Either one removes the player-submits step and the admin click
 
-### 6.7 Skill Rating (Hybrid: Admin Tier + ELO)
+### 6.9 Skill Rating (Hybrid: Admin Tier + ELO)
 
 - On signup, an admin assigns an **initial tier** from the existing community taxonomy: `Pro`, `Semi-Pro`, `1-1`, `1-2`, `1-3`, `2-1`, `2-2`, `2-3`, `3-1`, `3-2`, `3-3`. Each tier maps to a starting MMR (e.g. Pro=2200, Semi-Pro=2000, 1-1=1800, ..., 3-3=1000).
 - After each match, MMR updates via a standard 5v5 team-ELO formula with K-factor 32 (configurable) and a multiplier based on score-differential (e.g. 16-3 swing > 16-14 swing).
 - Tier is auto-recomputed from MMR every match (with a 50-MMR hysteresis to prevent tier flapping).
-- Players can dispute their tier via a ticket; Skill Admin can override the MMR (logged in audit trail).
-- Internal MMR is hidden from players for MVP (only tier is shown). Public reveal is a v2 decision.
+- Players can dispute their tier via a ticket. A Skill Admin can override the MMR (logged in audit trail).
+- Internal MMR is hidden from players for MVP. Only the tier is shown, and the lobby browser averages those displayed tiers. Public MMR reveal is a v2 decision.
 
-### 6.8 Anti-Cheat and Fairness
+### 6.10 Anti-Cheat and Fairness
 
 Mandatory in MVP:
 
@@ -196,63 +250,66 @@ Mandatory in MVP:
 - Minimum Steam account age and CS2 hours (see 6.1)
 - One verified phone = one account
 - Auto-record GOTV demo for every match, stored 30 days
-- Internal **trust factor / behavior score** (0-100, starts at 80) - drops on: leavers, reports confirmed, late accepts, admin warnings. Restrictions kick in at <50 (longer queue times, higher MMR opponents), bans at <20.
+- Internal **trust factor / behavior score** (0-100, starts at 80). It drops on leavers, confirmed reports, sitting not-Ready until vote-kicked, no-shows after Start, and admin warnings.
+- Restrictions at a score below 50, kept deliberately simple: the Create button is hidden, and joins are limited to lobbies whose average tier is close to the player's own tier. Bans at a score below 20.
 
 Recommended additional anti-cheat (flagged for MVP-or-soon-after decision):
 
 - Re-check VAC/game-ban immediately before each match start, not just weekly
-- IP + device fingerprint heuristics for smurf-account detection (alt account joined from same fingerprint as a banned account triggers admin review)
-- Sudden MMR-jump anomaly detector (silver-tier player suddenly winning every round = flagged for demo review)
-- Manual demo review queue: players can submit a timestamped report on a finished match; Skill/Match Admin reviews
-- Shadow-ban: banned account can queue but never matches, prevents informing the cheater
+- IP + device fingerprint heuristics for smurf-account detection (an alt account joined from the same fingerprint as a banned account triggers admin review)
+- Sudden MMR-jump anomaly detector (a silver-tier player suddenly winning every round gets flagged for demo review)
+- Manual demo review list: players can submit a timestamped report on a finished match, and a Skill or Match Admin reviews it
+- Shadow-ban: a `banned` account can open Play and see the lobby list, but every join is rejected. The account never reaches a match and is never told it is banned.
 - Stream-delay on GOTV (90s) to prevent stream-sniping
-- Phase 2: optional 3rd-party AC integration (FACEIT-AC client, ESL Wire, or in-house kernel-level AC) - heavyweight, defer
-- Phase 2: mandatory anti-cheat client download before queueing (community pushback risk)
+- Phase 2: optional 3rd-party AC integration (FACEIT-AC client, ESL Wire, or in-house kernel-level AC). Heavyweight, defer.
+- Phase 2: mandatory anti-cheat client download before joining a lobby (community pushback risk)
 
-### 6.9 Disputes, Refunds, and Behavior Score
+### 6.11 Disputes, Refunds, and Behavior Score
 
 Default policy (automated strict):
 
-- **No-show** (failed to connect within 10 min of server-ready): player loses entry fee, team plays 4v5 or forfeits at captain's choice, behavior score -10
-- **Mid-match rage-quit** (left without returning for 3 consecutive rounds): treated as forfeit by their team, behavior score -15
+- **Sat not-Ready and got vote-kicked** (not-Ready for more than 2 minutes before the vote passed): escrow released in full, behavior score -5
+- **No-show after Start** (failed to connect within 10 min of server-ready): player loses entry fee, their side plays 4v5 or forfeits at the choice of the remaining four, behavior score -10
+- **Mid-match rage-quit** (left without returning for 3 consecutive rounds): treated as a forfeit by their side, behavior score -15
 - **Server crash before round 6**: full refund to all 10, no MMR change
-- **Server crash after round 6**: leading team gets winner payout; if tied, full refund
-- **Confirmed cheater (post-match)**: cheater's team's winnings clawed back to the other team, cheater account banned, behavior score reset
+- **Server crash after round 6**: leading side gets winner payout. If tied, full refund.
+- **Confirmed cheater (post-match)**: the cheater's side's winnings are clawed back to the other side, the cheater account is banned, behavior score reset
 - **No refunds** outside the above cases except via Finance Admin override (audited)
 
-Dispute ticket UI: any player can open a ticket on a finished match with text + demo link; routed to Match Admin queue.
+Dispute ticket UI: any player can open a ticket on a finished match with text + demo link. Tickets are routed to the Match Admin ticket list.
 
-### 6.10 Admin Panel (Tiered)
+### 6.12 Admin Panel (Tiered)
 
-Three tiers with role-based access:
+Roles with role-based access:
 
-- **Super Admin**: manage admin roles, server contracts, system config (thresholds, K-factor, fee amounts), view all ledger entries, manual wallet adjustments
-- **Finance Admin**: review/approve manual deposits, trigger payouts (in MVP these are triggered automatically by match confirm; this role handles edge cases), process refund tickets, view wallet ledger
-- **Match Admin**: allocate CS2 servers to matches, confirm winner, cancel matches, sub players, handle in-match disputes
+- **Super Admin**: manage admin roles, server contracts, system config (thresholds, K-factor, fee amounts, lobby idle limit, vote-kick settings), view all ledger entries, manual wallet adjustments
+- **Finance Admin**: review/approve manual deposits, trigger payouts (in MVP the match confirm triggers these automatically, so this role handles edge cases), process refund tickets, view wallet ledger
+- **Match Admin**: allocate CS2 servers to matches, confirm winner, cancel matches, sub players, close abusive lobbies, handle in-match disputes
 - **Skill Admin**: set initial tier, override MMR, review tier-dispute tickets, ban smurfs
 - **Support**: read-only access + ability to respond to user tickets
 
 All admin actions write to an immutable `admin_audit_log`.
 
-### 6.11 Community Migration and Discord Integration
+### 6.13 Community Migration and Discord Integration
 
-- Discord bot: posts queue status, match-found pings, match-result summaries, leaderboard changes
+- Discord bot posts lobby-full alerts, match-started alerts with connect info, match-result summaries, and leaderboard changes
 - Existing Discord admins are pre-onboarded as platform admins
-- Bulk-import of current community players' Steam IDs + their existing skill tiers via a CSV upload (Super Admin only) - one-time migration on launch
+- Bulk-import of current community players' Steam IDs + their existing skill tiers via a CSV upload (Super Admin only), a one-time migration on launch
 - Public leaderboard page (web) with rank, tier, W/L, K/D, recent matches
 
-### 6.12 Notifications
+### 6.14 Notifications
 
-- In-app: match found, draft turn, server ready, payout received, ticket reply
+- In-app: someone joined your lobby, lobby is full, all 10 Ready, vote kick started against you, match started, server ready, payout received, ticket reply
 - Email: payout received, withdrawal status, account-restriction warnings
-- Discord DM (if linked): match-found alert (most important for community continuity)
+- Discord DM (if linked): lobby full and match started (most important for community continuity)
 
 ## 7. Non-Functional Requirements
 
-- Match-found to draft: under 5 seconds end-to-end
-- Captain draft UI latency: under 500ms per pick action (WebSocket)
+- Seat and Ready updates reach every lobby member in under 200ms
+- Chat messages reach every lobby member in under 300ms
+- Vote kick resolves to one outcome that every member sees. The server owns the tally, so no two members can see different results.
 - Wallet ledger consistency: ACID, double-entry style, no negative balances allowed
-- Server uptime target: 99.5% for the platform; ping to Mongolian CS2 servers <10ms for players in Mongolia (driven by infra choice)
+- Server uptime target: 99.5% for the platform. Ping to Mongolian CS2 servers under 10ms for players in Mongolia, driven by infra choice.
 - Idempotent payment webhooks (QPay callback can be retried without double-credit)
 - All money operations logged with `(user_id, match_id, amount, op, ts, request_id)` and reconcilable end-of-day
 
@@ -260,13 +317,14 @@ All admin actions write to an immutable `admin_audit_log`.
 
 Recommendation (skipped by stakeholder, proposing default):
 
-- Frontend: Next.js app (`apps/front`) + React + Tailwind, deployed to Vercel or Mongolian hosting; admin web app deferred
-- Backend: Fastify app (`apps/backend`) — modular HTTP API (`/api/*`) + WebSockets (`/ws/*`) for queue/draft; front stays UI-focused with optional thin BFF routes
-- DB: Postgres (Supabase or managed) for relational data + ledger; Redis for queue state and pub/sub on draft events
-- Auth: Steam OpenID for primary login, Discord OAuth for optional link, SMS OTP for phone verification (Mongolian SMS provider TBD - flag)
-- Realtime: WebSockets for queue + draft, fall back to Server-Sent Events
-- Payments: QPay webhook integration; payment provider abstraction so additional Mongolian providers can be added
-- Server allocation in MVP: admin panel UI only; v2 adds provider-specific adapters behind a common interface
+- Frontend: Next.js app (`apps/front`) + React + Tailwind, deployed to Vercel or Mongolian hosting. Admin web app deferred.
+- Backend: Fastify app (`apps/backend`), a modular HTTP API (`/api/*`) plus WebSockets (`/ws/*`) for the lobby. The front stays UI-focused with optional thin BFF routes.
+- Modules are named after the lobby, not after a queue or a draft. The play path is `lobby`.
+- DB: Postgres (Supabase or managed) for relational data + ledger. Redis for live lobby state and pub/sub.
+- Auth: Steam OpenID for primary login, Discord OAuth for optional link, SMS OTP for phone verification (Mongolian SMS provider TBD, flag)
+- Realtime: WebSockets carry the lobby list, seat changes, side assignment, Ready flags, chat, and vote kick. Redis pub/sub fans those channels out across backend instances. Server-Sent Events are the fallback for the read-only lobby list.
+- Payments: QPay webhook integration, with a payment provider abstraction so additional Mongolian providers can be added
+- Server allocation in MVP: admin panel UI only. v2 adds provider-specific adapters behind a common interface.
 - Anti-cheat data: Steam Web API client cached in Redis with weekly refresh
 
 ## 9. MVP Scope (In vs Out)
@@ -274,21 +332,26 @@ Recommendation (skipped by stakeholder, proposing default):
 In MVP:
 
 - Steam + phone signup, VAC/game-ban + account-age checks
-- Wallet model with QPay deposits, escrow per match, automatic credit on result confirm
-- Continuous matchmaking queue with solo/duo/trio + draft-advantage rule
-- Live captain draft with 30s timer
+- Wallet model with QPay deposits, escrow per seat, automatic credit on result confirm
+- Lobby browser with create, join, occupancy, ready count, and average displayed tier
+- Lobby room with 10 seats, Team A/Team B sides, Ready toggle, host Start, host transfer
+- Member-only lobby text chat
+- Vote kick with majority threshold and per-target cooldown
 - Manual server allocation by Match Admin
 - Hybrid skill rating (admin initial + auto ELO + tier mapping)
 - Admin panel with tiered roles
-- Captain-submitted scores + admin-confirmed result -> automatic payout
+- Per-side score submission + admin-confirmed result, then automatic payout
 - Automated strict dispute/refund policy + behavior score
 - Discord bot for notifications + bulk community migration via CSV import
 - Public leaderboard + basic profile pages
 
 Explicitly Out of MVP (deferred):
 
-- Automated match result detection (R3 - top priority post-MVP)
+- Automated match result detection (R3, top priority post-MVP)
+- Auto-start when all 10 seats are Ready. The host stays the start actor in MVP.
+- Hard rank gates on joining a lobby. Average rank stays informational.
 - Automated server provisioning via provider API
+- In-platform voice chat
 - Native mobile apps
 - Tournaments / brackets / leagues
 - Seasons + seasonal rewards
@@ -304,27 +367,32 @@ Explicitly Out of MVP (deferred):
 4. Seasons with periodic MMR soft-reset + cosmetic rewards
 5. Optional 3rd-party anti-cheat client requirement
 6. Tournament mode (single/double elim brackets)
+7. Auto-start once all 10 seats are Ready, so a lobby no longer waits on the host
 
 ## 11. Success Metrics
 
-- Activation: phone-verified accounts / Steam signups - target 60%
-- Liquidity: avg matches/day - target 15 by month 2 (vs. 5-8 today)
-- Admin load: admin-minutes per match - target under 3 min (vs. ~15 today)
-- Wallet retention: % of payouts that stay in wallet (re-played) vs. withdrawn - higher is better
-- Behavior: % of matches with no leavers - target >85%
-- Disputes: % of matches escalated to admin - target <5%
+- Activation: phone-verified accounts / Steam signups, target 60%
+- Liquidity: avg matches/day, target 15 by month 2 (vs. 5-8 today)
+- Lobby fill: % of created lobbies that reach 10/10 Ready and start, target >60%
+- Start friction: median minutes from lobby creation to Start, target under 10
+- Admin load: admin-minutes per match, target under 3 min (vs. ~15 today)
+- Wallet retention: % of payouts that stay in wallet (re-played) vs. withdrawn, higher is better
+- Behavior: % of matches with no leavers, target >85%
+- Disputes: % of matches escalated to admin, target <5%
 
 ## 12. Items to Resolve Before/During Build
 
 These remain open and must be tracked:
 
-- **R1 Legal review** - Mongolian lawyer to confirm skill-based-gaming classification, KYC level required, age-gate, tax/VAT obligations
-- **R2 Mongolian CS2 server supply** - identify 2-3 contracted server operators, pricing, capacity, SLA, RCON access for future automation
-- **R3 Result verification automation path** - decide GSI vs Get5/MatchZy vs RCON polling; influences server-side plugin requirements
+- **R1 Legal review.** Mongolian lawyer to confirm skill-based-gaming classification, KYC level required, age-gate, tax/VAT obligations
+- **R2 Mongolian CS2 server supply.** Identify 2-3 contracted server operators, pricing, capacity, SLA, RCON access for future automation
+- **R3 Result verification automation path.** Decide GSI vs Get5/MatchZy vs RCON polling. This influences server-side plugin requirements.
 - Mongolian SMS OTP provider selection
 - Confirm additional payment providers beyond QPay (SocialPay, Khan Bank, manual bank, crypto?)
 - Concrete K-factor + initial-MMR-per-tier table to be tuned with community input
-- Anti-cheat additions to enable in MVP vs. defer (the recommended list in 6.8)
+- Vote-kick threshold, window, and per-target cooldown to be tuned with community input
+- Chat moderation policy, including who reviews reported messages and what a mute costs
+- Anti-cheat additions to enable in MVP vs. defer (the recommended list in 6.10)
 - Withdrawal fee policy (platform takes a cut? matches the 5k server fee? need stakeholder input)
 - Branding / product name / domain
 - Privacy policy + Terms of Service drafted in Mongolian and English
