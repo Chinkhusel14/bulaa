@@ -6,8 +6,8 @@ Paid CS2 5v5 lobbies for Mongolia. Players create and join a lobby, ready up, pl
 
 ```
 apps/
-  front/               Next.js — player-facing UI
-  backend/             Fastify — HTTP API + WebSockets
+  front/               Next.js, player-facing UI
+  backend/             Fastify, HTTP API + WebSockets
     src/
       config/          env
       plugins/         cors, websocket, …

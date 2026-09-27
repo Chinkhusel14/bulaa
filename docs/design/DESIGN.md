@@ -1,4 +1,4 @@
-# Bulaa Design System — Clutch
+# Bulaa design system (Clutch)
 
 > **For AI agents:** Before any UI, page, email, Discord embed, or marketing surface, read this file and import tokens from `tokens.ts` / `tokens.css`. Do not invent alternate palettes, fonts, or radii.
 
@@ -15,9 +15,9 @@
 
 | File | Use |
 |---|---|
-| [`packages/design`](../../packages/design) | Runtime tokens — `@bulaa/design` |
+| [`packages/design`](../../packages/design) | Runtime tokens, imported as `@bulaa/design` |
 | [`tokens.ts`](../../packages/design/src/tokens.ts) | Colors, fonts, radii, motion, Tailwind theme helper |
-| [`tokens.css`](../../packages/design/src/tokens.css) | CSS custom properties — import in app root |
+| [`tokens.css`](../../packages/design/src/tokens.css) | CSS custom properties, imported in the app root |
 
 ```ts
 import { colors, fonts, radius, tailwindTheme } from "@bulaa/design";
@@ -67,9 +67,9 @@ import "@bulaa/design/tokens.css";
 
 | Role | Font | Weight |
 |---|---|---|
-| Display / brand / H1 | Chakra Petch | 600–700 |
-| Body / UI | IBM Plex Sans | 400–600 |
-| Mono (IDs, connect, ledger) | IBM Plex Mono | 400–500 |
+| Display / brand / H1 | Chakra Petch | 600-700 |
+| Body / UI | IBM Plex Sans | 400-600 |
+| Mono (IDs, connect, ledger) | IBM Plex Mono | 400-500 |
 
 Google Fonts query (in `tokens.ts` as `fonts.googleFamilies`):
 
@@ -79,8 +79,8 @@ Google Fonts query (in `tokens.ts` as `fonts.googleFamilies`):
 
 ## Radii & chrome
 
-- Radii: `4px` / `5px` / `6px` only — sharp, not pills
-- Primary button: solid lime + `onPrimary` label — no glow, no gradients on CTAs
+- Radii: `4px`, `5px`, `6px` only. Sharp, not pills.
+- Primary button: solid lime with an `onPrimary` label. No glow, no gradients on CTAs.
 - Tier badges: left accent bar preferred over rounded chips
 - One primary CTA per view
 
@@ -96,13 +96,13 @@ Countdowns such as the 30s vote-kick window use `warning` at 10s or less and `da
 
 ## Hard rules (do not break)
 
-1. **Dark only** — no cream/light default theme.
+1. **Dark only.** No cream or light default theme.
 2. **No purple brand accents.** No Inter/Roboto/Arial as primary UI fonts.
-3. **Money always** `money` color + tabular nums — never lime text on yellow chips.
+3. **Money always** uses the `money` color with tabular nums. Never lime text on yellow chips.
 4. **Win/loss** use `success` / `danger`, not primary alone for loss states.
-5. **Do not invent new brand colors** — extend via opacity of existing tokens if needed.
-6. **Cards sparingly** — prefer flat raised panels; no card chrome in heroes.
-7. **No casino visual language** — no neon glow stacks, no jackpot gold explosions.
+5. **Do not invent new brand colors.** Extend an existing token with opacity if needed.
+6. **Cards sparingly.** Prefer flat raised panels. No card chrome in heroes.
+7. **No casino visual language.** No neon glow stacks, no jackpot gold explosions.
 
 ## Product surfaces to style with these tokens
 
