@@ -1,0 +1,3 @@
+$kind: collection
+name: Dev
+description: Development-only auth helpers (NODE_ENV=development).

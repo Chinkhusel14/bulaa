@@ -1,5 +1,6 @@
 export { adminModule } from "./admin";
 export { authModule } from "./auth";
+export { devModule } from "./dev";
 export { draftModule } from "./draft";
 export { healthModule } from "./health";
 export { lobbyModule } from "./lobby";

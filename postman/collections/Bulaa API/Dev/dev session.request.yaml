@@ -1,0 +1,11 @@
+$kind: http-request
+name: dev session
+method: POST
+url: '{{baseUrl}}/api/dev/session'
+description: Sets bulaa_session for a dev persona or any user id. Only when NODE_ENV=development.
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  mode: raw
+  raw: '{"label":"player-1"}'

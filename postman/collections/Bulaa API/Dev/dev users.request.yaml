@@ -1,0 +1,5 @@
+$kind: http-request
+name: dev users
+method: GET
+url: '{{baseUrl}}/api/dev/users'
+description: Lists seeded dev personas (player-1 … player-10). Only when NODE_ENV=development.
