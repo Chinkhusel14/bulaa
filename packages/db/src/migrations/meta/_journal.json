@@ -15,6 +15,13 @@
       "when": 1790522968725,
       "tag": "0001_dapper_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790600269880,
+      "tag": "0002_prize_pool_lobbies",
+      "breakpoints": true
     }
   ]
 }

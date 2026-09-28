@@ -1,0 +1,7 @@
+$kind: http-request
+id: 9a22d5e0159556dff7533803
+name: health
+method: GET
+url: '{{baseUrl}}/health'
+description: Liveness probe for the Fastify backend (no /api prefix).
+examples: './.resources/health.resources/examples'

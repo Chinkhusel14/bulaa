@@ -12,7 +12,8 @@ export async function loadOpenLobbies(db: Database): Promise<LobbySummary[]> {
   const rows = await db
     .select({
       id: lobbies.id,
-      name: lobbies.name,
+      prizePoolMnt: lobbies.prizePoolMnt,
+      serverFeeMnt: lobbies.serverFeeMnt,
       createdAt: lobbies.createdAt,
       hostDisplayName: users.displayName,
       hostMmr: users.mmr,
@@ -39,20 +40,21 @@ export async function loadOpenLobbies(db: Database): Promise<LobbySummary[]> {
     );
 
   return rows.map((row) => {
-    const seated = members.filter((m) => m.lobbyId === row.id);
+    const joined = members.filter((m) => m.lobbyId === row.id);
     const host = tierForMmr(row.hostMmr);
     const average = averageTier(
       row.hostMmr,
-      seated.map((m) => m.mmr),
+      joined.map((m) => m.mmr),
     );
     return {
       id: row.id,
-      name: row.name,
+      prizePoolMnt: row.prizePoolMnt,
+      serverFeeMnt: row.serverFeeMnt,
       hostDisplayName: row.hostDisplayName,
       hostTier: host.label,
       hostTierBand: host.band,
-      occupancy: seated.length,
-      readyCount: seated.filter((m) => m.ready).length,
+      occupancy: joined.length,
+      readyCount: joined.filter((m) => m.ready).length,
       averageTier: average.label,
       averageTierBand: average.band,
       createdAt: row.createdAt.toISOString(),

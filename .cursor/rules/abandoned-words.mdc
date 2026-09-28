@@ -1,0 +1,37 @@
+---
+description: Banned words for UI copy, identifiers, comments, and docs, with approved replacements
+alwaysApply: true
+---
+
+# Abandoned words
+
+Do not use the terms below anywhere a person reads them. That covers UI copy (MN and EN), aria labels and titles, error messages, user-facing identifiers (API fields, DB columns, types, props, i18n keys), code comments, tests, and `docs/`.
+
+Before finishing any change that touches copy, docs, or lobby code, grep for every banned term. Exclude `node_modules`, `.next`, and lockfiles:
+
+```bash
+rg -i "seated|суусан" --glob '!**/node_modules/**' --glob '!**/.next/**' --glob '!pnpm-lock.yaml'
+```
+
+## Banned terms
+
+| Banned (MN / EN) | Also catches | Use instead |
+|---|---|---|
+| суусан / seated | seatedAt, seated_at, longest-seated, "Та суусан" | MN: орсон, лобби-д байна. EN: joined, in the lobby, players / occupancy (`n/10`), `joinedAt`, "joined earliest" |
+
+"Seat" as a noun is fine: seat 1, 10 seats, open seat, seat map. Only the "seated" state and its Mongolian form are banned.
+
+## Exceptions
+
+Historical migrations are immutable, so they keep the old column name:
+
+- `packages/db/src/migrations/0001_*.sql` and `meta/0001_snapshot.json` (`seated_at`)
+- `packages/db/src/migrations/0002_prize_pool_lobbies.sql` (the `RENAME COLUMN "seated_at" TO "joined_at"` statement)
+
+Keep a banned wire field or column only if renaming it would break a deployed client. List it here with the reason.
+
+## Adding a term
+
+1. Add a row to the table: the banned MN and EN pair, the identifier variants, and the replacements.
+2. Add the term to the `rg` pattern above.
+3. Run the grep, replace every hit, and list any exceptions you have to keep.

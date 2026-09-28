@@ -40,9 +40,7 @@ export const users = pgTable("users", {
   vacBanned: boolean("vac_banned").notNull().default(false),
   gameBanned: boolean("game_banned").notNull().default(false),
   lastSteamCheckAt: timestamp("last_steam_check_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const walletAccounts = pgTable("wallet_accounts", {
@@ -52,9 +50,7 @@ export const walletAccounts = pgTable("wallet_accounts", {
     .references(() => users.id)
     .unique(),
   balanceMnt: integer("balance_mnt").notNull().default(0),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const ledgerEntries = pgTable("ledger_entries", {
@@ -66,9 +62,7 @@ export const ledgerEntries = pgTable("ledger_entries", {
   amountMnt: integer("amount_mnt").notNull(),
   op: text("op").notNull(),
   requestId: text("request_id").notNull().unique(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const lobbyStatusEnum = pgEnum("lobby_status", [
@@ -84,14 +78,13 @@ export const lobbyStatusEnum = pgEnum("lobby_status", [
 
 export const lobbies = pgTable("lobbies", {
   id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
+  prizePoolMnt: integer("prize_pool_mnt").notNull(),
+  serverFeeMnt: integer("server_fee_mnt").notNull(),
   hostUserId: uuid("host_user_id")
     .notNull()
     .references(() => users.id),
   status: lobbyStatusEnum("status").notNull().default("open"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const lobbyMembers = pgTable(
@@ -106,9 +99,7 @@ export const lobbyMembers = pgTable(
       .references(() => users.id),
     seat: integer("seat").notNull(),
     ready: boolean("ready").notNull().default(false),
-    seatedAt: timestamp("seated_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     unique("lobby_members_lobby_user_unique").on(t.lobbyId, t.userId),

@@ -1,19 +1,13 @@
+import { lobbies, lobbyMembers, users, walletAccounts, type Database } from "@bulaa/db";
 import {
-  lobbies,
-  lobbyMembers,
-  users,
-  walletAccounts,
-  type Database,
-} from "@bulaa/db";
-import type { LobbyErrorCode, LobbyViewer } from "@bulaa/shared";
+  lobbyCostMnt,
+  type AccountStatus,
+  type LobbyErrorCode,
+  type LobbyViewer,
+} from "@bulaa/shared";
 import { and, eq } from "drizzle-orm";
 import { AppError } from "../../lib/errors";
-import {
-  entryDenial,
-  planJoin,
-  planLeave,
-  type Membership,
-} from "./rules";
+import { entryDenial, planJoin, planLeave, type Membership } from "./rules";
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type Queryable = Pick<Database, "select">;
@@ -27,7 +21,7 @@ const ERROR_STATUS: Record<LobbyErrorCode, number> = {
   lobby_full: 409,
   lobby_closed: 409,
   not_in_lobby: 409,
-  invalid_name: 400,
+  invalid_prize_pool: 400,
 };
 
 export function lobbyError(code: LobbyErrorCode): AppError {
@@ -54,10 +48,7 @@ async function readBalance(q: Queryable, userId: string): Promise<number> {
   return wallet?.balanceMnt ?? 0;
 }
 
-async function findMembership(
-  q: Queryable,
-  userId: string,
-): Promise<Membership | null> {
+async function findMembership(q: Queryable, userId: string): Promise<Membership | null> {
   const [hosted] = await q
     .select({ lobbyId: lobbies.id })
     .from(lobbies)
@@ -65,29 +56,31 @@ async function findMembership(
     .limit(1);
   if (hosted) return { lobbyId: hosted.lobbyId, role: "host" };
 
-  const [seated] = await q
+  const [joined] = await q
     .select({ lobbyId: lobbyMembers.lobbyId })
     .from(lobbyMembers)
     .innerJoin(lobbies, eq(lobbies.id, lobbyMembers.lobbyId))
     .where(and(eq(lobbyMembers.userId, userId), eq(lobbies.status, "open")))
     .limit(1);
-  return seated ? { lobbyId: seated.lobbyId, role: "member" } : null;
+  return joined ? { lobbyId: joined.lobbyId, role: "member" } : null;
 }
 
-async function assertCanEnter(tx: Tx, userId: string): Promise<void> {
-  const { status } = await lockCaller(tx, userId);
+async function assertCanEnter(
+  tx: Tx,
+  userId: string,
+  status: AccountStatus,
+  costMnt: number,
+): Promise<void> {
   const denial = entryDenial({
     status,
+    costMnt,
     balanceMnt: await readBalance(tx, userId),
     membership: await findMembership(tx, userId),
   });
   if (denial) throw lobbyError(denial);
 }
 
-export async function loadViewer(
-  db: Database,
-  userId: string,
-): Promise<LobbyViewer> {
+export async function loadViewer(db: Database, userId: string): Promise<LobbyViewer> {
   const [balanceMnt, membership] = await Promise.all([
     readBalance(db, userId),
     findMembership(db, userId),
@@ -102,11 +95,18 @@ export async function loadViewer(
 export async function createLobby(
   db: Database,
   userId: string,
-  name: string,
+  prizePoolMnt: number,
+  serverFeeMnt: number,
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    await assertCanEnter(tx, userId);
-    await tx.insert(lobbies).values({ name, hostUserId: userId });
+    const { status } = await lockCaller(tx, userId);
+    await assertCanEnter(tx, userId, status, lobbyCostMnt(prizePoolMnt, serverFeeMnt));
+    const [lobby] = await tx
+      .insert(lobbies)
+      .values({ prizePoolMnt, serverFeeMnt, hostUserId: userId })
+      .returning({ id: lobbies.id });
+    if (!lobby) throw new Error("Lobby insert returned no row");
+    await tx.insert(lobbyMembers).values({ lobbyId: lobby.id, userId, seat: 0 });
   });
 }
 
@@ -116,14 +116,25 @@ export async function joinLobby(
   lobbyId: string,
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    await assertCanEnter(tx, userId);
+    const { status } = await lockCaller(tx, userId);
 
     const [lobby] = await tx
-      .select({ status: lobbies.status })
+      .select({
+        status: lobbies.status,
+        prizePoolMnt: lobbies.prizePoolMnt,
+        serverFeeMnt: lobbies.serverFeeMnt,
+      })
       .from(lobbies)
       .where(eq(lobbies.id, lobbyId))
       .for("update");
     if (!lobby) throw lobbyError("lobby_closed");
+
+    await assertCanEnter(
+      tx,
+      userId,
+      status,
+      lobbyCostMnt(lobby.prizePoolMnt, lobby.serverFeeMnt),
+    );
 
     const taken = await tx
       .select({ seat: lobbyMembers.seat })
@@ -158,7 +169,7 @@ export async function leaveLobby(
       .select({
         userId: lobbyMembers.userId,
         seat: lobbyMembers.seat,
-        seatedAt: lobbyMembers.seatedAt,
+        joinedAt: lobbyMembers.joinedAt,
       })
       .from(lobbyMembers)
       .where(eq(lobbyMembers.lobbyId, lobbyId));
@@ -168,9 +179,7 @@ export async function leaveLobby(
 
     await tx
       .delete(lobbyMembers)
-      .where(
-        and(eq(lobbyMembers.lobbyId, lobbyId), eq(lobbyMembers.userId, userId)),
-      );
+      .where(and(eq(lobbyMembers.lobbyId, lobbyId), eq(lobbyMembers.userId, userId)));
 
     switch (plan.kind) {
       case "free_seat":

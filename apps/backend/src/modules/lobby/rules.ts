@@ -1,6 +1,5 @@
 import type { lobbies } from "@bulaa/db";
 import {
-  LOBBY_ENTRY_MNT,
   LOBBY_SEAT_COUNT,
   type AccountStatus,
   type LobbyErrorCode,
@@ -36,13 +35,10 @@ export function tierForMmr(mmr: number): Tier {
   return match ? { label: match.label, band: match.band } : LOWEST_TIER;
 }
 
-export function averageTier(
-  hostMmr: number,
-  seatedMmrs: readonly number[],
-): Tier {
-  if (seatedMmrs.length === 0) return tierForMmr(hostMmr);
-  const total = seatedMmrs.reduce((sum, mmr) => sum + mmr, 0);
-  return tierForMmr(total / seatedMmrs.length);
+export function averageTier(hostMmr: number, memberMmrs: readonly number[]): Tier {
+  if (memberMmrs.length === 0) return tierForMmr(hostMmr);
+  const total = memberMmrs.reduce((sum, mmr) => sum + mmr, 0);
+  return tierForMmr(total / memberMmrs.length);
 }
 
 export function nextFreeSeat(takenSeats: readonly number[]): number | null {
@@ -76,39 +72,34 @@ function accountDenial(status: AccountStatus): LobbyErrorCode | null {
 export function entryDenial(caller: {
   status: AccountStatus;
   balanceMnt: number;
+  costMnt: number;
   membership: Membership | null;
 }): LobbyErrorCode | null {
   const account = accountDenial(caller.status);
   if (account) return account;
   if (caller.membership) return "already_in_lobby";
-  if (caller.balanceMnt < LOBBY_ENTRY_MNT) return "insufficient_balance";
+  if (caller.balanceMnt < caller.costMnt) return "insufficient_balance";
   return null;
 }
 
 export type JoinPlan =
-  | { ok: true; seat: number }
-  | { ok: false; code: "lobby_closed" | "lobby_full" };
+  { ok: true; seat: number } | { ok: false; code: "lobby_closed" | "lobby_full" };
 
-export function planJoin(
-  status: LobbyStatus,
-  takenSeats: readonly number[],
-): JoinPlan {
+export function planJoin(status: LobbyStatus, takenSeats: readonly number[]): JoinPlan {
   if (status !== "open") return { ok: false, code: "lobby_closed" };
   const seat = nextFreeSeat(takenSeats);
   return seat === null ? { ok: false, code: "lobby_full" } : { ok: true, seat };
 }
 
-export interface SeatedMember {
+export interface LobbyMember {
   userId: string;
   seat: number;
-  seatedAt: Date;
+  joinedAt: Date;
 }
 
-export function nextHost(
-  members: readonly SeatedMember[],
-): SeatedMember | null {
+export function nextHost(members: readonly LobbyMember[]): LobbyMember | null {
   const [first] = [...members].sort(
-    (a, b) => a.seatedAt.getTime() - b.seatedAt.getTime() || a.seat - b.seat,
+    (a, b) => a.joinedAt.getTime() - b.joinedAt.getTime() || a.seat - b.seat,
   );
   return first ?? null;
 }
@@ -121,15 +112,13 @@ export type LeavePlan =
 
 export function planLeave(
   hostUserId: string,
-  members: readonly SeatedMember[],
+  members: readonly LobbyMember[],
   leaverId: string,
 ): LeavePlan {
   const isHost = hostUserId === leaverId;
-  const isSeated = members.some((m) => m.userId === leaverId);
-  if (!isHost && !isSeated) return { kind: "not_in_lobby" };
+  const isMember = members.some((m) => m.userId === leaverId);
+  if (!isHost && !isMember) return { kind: "not_in_lobby" };
   if (!isHost) return { kind: "free_seat" };
   const next = nextHost(members.filter((m) => m.userId !== leaverId));
-  return next
-    ? { kind: "transfer_host", hostUserId: next.userId }
-    : { kind: "cancel" };
+  return next ? { kind: "transfer_host", hostUserId: next.userId } : { kind: "cancel" };
 }

@@ -4,20 +4,20 @@
 
 ## Locked brand
 
-| Field | Value |
-|---|---|
-| Brand system | Clutch |
-| Product name | Bulaa |
-| Mode | Dark only (no light theme in MVP) |
-| Tone | Competitive FPS, paid 5v5 lobbies. Fierce, not casino. |
+| Field        | Value                                                  |
+| ------------ | ------------------------------------------------------ |
+| Brand system | Clutch                                                 |
+| Product name | Bulaa                                                  |
+| Mode         | Dark only (no light theme in MVP)                      |
+| Tone         | Competitive FPS, paid 5v5 lobbies. Fierce, not casino. |
 
 ## Source of truth
 
-| File | Use |
-|---|---|
-| [`packages/design`](../../packages/design) | Runtime tokens, imported as `@bulaa/design` |
-| [`tokens.ts`](../../packages/design/src/tokens.ts) | Colors, fonts, radii, motion, Tailwind theme helper |
-| [`tokens.css`](../../packages/design/src/tokens.css) | CSS custom properties, imported in the app root |
+| File                                                 | Use                                                 |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| [`packages/design`](../../packages/design)           | Runtime tokens, imported as `@bulaa/design`         |
+| [`tokens.ts`](../../packages/design/src/tokens.ts)   | Colors, fonts, radii, motion, Tailwind theme helper |
+| [`tokens.css`](../../packages/design/src/tokens.css) | CSS custom properties, imported in the app root     |
 
 ```ts
 import { colors, fonts, radius, tailwindTheme } from "@bulaa/design";
@@ -37,38 +37,38 @@ import "@bulaa/design/tokens.css";
 
 ## Color roles
 
-| Token | Hex | Use for |
-|---|---|---|
-| `bgVoid` | `#070809` | Deepest background / hero void |
-| `bgBase` | `#0C0E12` | Default page canvas |
-| `bgRaised` | `#14181F` | Panels, modals, cards (sparingly) |
-| `bgOverlay` | `#1C222C` | Hover / elevated strips |
-| `border` | `#2A3140` | Hairlines, inputs |
-| `borderStrong` | `#3D4658` | Focus / strong dividers |
-| `text` | `#F4F6F8` | Primary copy |
-| `textMuted` | `#8B93A7` | Labels, secondary |
-| `textFaint` | `#5C6578` | Placeholders, disabled |
-| `primary` | `#C8F542` | CTA, Ready state, brand accent |
-| `primaryHover` | `#D6FF66` | Primary hover |
-| `primaryPressed` | `#A8D12E` | Primary active |
-| `primaryMuted` | `#C8F54226` | Soft selection fills |
-| `onPrimary` | `#0A0C08` | Text/icons on primary buttons |
-| `accent` | `#6B9BFF` | Links, secondary actions |
-| `success` | `#C8F542` | Win, payout credit |
-| `warning` | `#FFC53D` | Vote-kick countdown, escrow hold |
-| `danger` | `#FF3D4A` | Loss, ban, destructive |
-| `info` | `#6B9BFF` | Neutral system notices |
-| `money` | `#FFE66B` | Wallet / MNT amounts only |
-| `tierPro` | `#C8F542` | Pro / top tiers |
-| `tierMid` | `#6B9BFF` | Mid tiers |
-| `tierLow` | `#8B93A7` | Lower tiers |
+| Token            | Hex         | Use for                           |
+| ---------------- | ----------- | --------------------------------- |
+| `bgVoid`         | `#070809`   | Deepest background / hero void    |
+| `bgBase`         | `#0C0E12`   | Default page canvas               |
+| `bgRaised`       | `#14181F`   | Panels, modals, cards (sparingly) |
+| `bgOverlay`      | `#1C222C`   | Hover / elevated strips           |
+| `border`         | `#2A3140`   | Hairlines, inputs                 |
+| `borderStrong`   | `#3D4658`   | Focus / strong dividers           |
+| `text`           | `#F4F6F8`   | Primary copy                      |
+| `textMuted`      | `#8B93A7`   | Labels, secondary                 |
+| `textFaint`      | `#5C6578`   | Placeholders, disabled            |
+| `primary`        | `#C8F542`   | CTA, Ready state, brand accent    |
+| `primaryHover`   | `#D6FF66`   | Primary hover                     |
+| `primaryPressed` | `#A8D12E`   | Primary active                    |
+| `primaryMuted`   | `#C8F54226` | Soft selection fills              |
+| `onPrimary`      | `#0A0C08`   | Text/icons on primary buttons     |
+| `accent`         | `#6B9BFF`   | Links, secondary actions          |
+| `success`        | `#C8F542`   | Win, payout credit                |
+| `warning`        | `#FFC53D`   | Vote-kick countdown, escrow hold  |
+| `danger`         | `#FF3D4A`   | Loss, ban, destructive            |
+| `info`           | `#6B9BFF`   | Neutral system notices            |
+| `money`          | `#FFE66B`   | Wallet / MNT amounts only         |
+| `tierPro`        | `#C8F542`   | Pro / top tiers                   |
+| `tierMid`        | `#6B9BFF`   | Mid tiers                         |
+| `tierLow`        | `#8B93A7`   | Lower tiers                       |
 
 ## Typography
 
-| Role | Font | Weight |
-|---|---|---|
-| Display / brand / H1 | Chakra Petch | 600-700 |
-| Body / UI | IBM Plex Sans | 400-600 |
+| Role                        | Font          | Weight  |
+| --------------------------- | ------------- | ------- |
+| Display / brand / H1        | Chakra Petch  | 600-700 |
+| Body / UI                   | IBM Plex Sans | 400-600 |
 | Mono (IDs, connect, ledger) | IBM Plex Mono | 400-500 |
 
 Google Fonts query (in `tokens.ts` as `fonts.googleFamilies`):
@@ -86,11 +86,11 @@ Google Fonts query (in `tokens.ts` as `fonts.googleFamilies`):
 
 ## Motion
 
-| Token | ms | Use |
-|---|---|---|
-| `pickSnap` | 120 | Seat and side selection snap |
-| `pickFlash` | 200 | Lime flash on Ready |
-| `fade` | 150 | Generic fade |
+| Token       | ms  | Use                          |
+| ----------- | --- | ---------------------------- |
+| `pickSnap`  | 120 | Seat and side selection snap |
+| `pickFlash` | 200 | Lime flash on Ready          |
+| `fade`      | 150 | Generic fade                 |
 
 Countdowns such as the 30s vote-kick window use `warning` at 10s or less and `danger` at 5s or less (`timer` in `tokens.ts`).
 
@@ -108,8 +108,13 @@ Countdowns such as the 30s vote-kick window use `warning` at 10s or less and `da
 
 In play order: auth, wallet and deposit, the Play lobby browser, the lobby room (roster, chat, Ready, vote kick), match and server info, result and payout, leaderboard and profile, admin panel, Discord bot embeds (map embed accent to `primary`).
 
-Lobby browser specifics:
+Lobby browser specifics (the Scout layout: filterable list plus a detail pane, which becomes a bottom sheet on mobile):
 
+- Lobbies have no name. A row leads with the host name and the prize pool in `money`, then average tier, seat meter, and age
 - Average rank on a lobby card is a tier badge with a left accent bar, using `tierPro` / `tierMid` / `tierLow`
 - Occupancy and ready counts are mono with tabular nums, same treatment as IDs
-- One primary CTA per view. Join on the browser, Ready in the room, Start for the host only.
+- The detail pane shows the joiner's cost as prize share + server fee = total, all in `money`
+- One primary CTA per view. Join on the browser, Ready in the room, Start for the host only. Create lobby is a secondary button in the browser header
+- Create lobby opens a modal wizard (native `<dialog>`, `bgRaised` panel with a `borderStrong` hairline, `bgVoid` backdrop). There are two steps: prize pool, then confirm. The server fee is shown read-only, and the wizard's own primary is Continue / Create
+
+Copy: follow the abandoned-words rule (`.cursor/rules/abandoned-words.mdc`). For lobby membership, say "joined" / "орсон" or "in the lobby" / "лобби-д байна".

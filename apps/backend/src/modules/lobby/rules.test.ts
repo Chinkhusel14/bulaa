@@ -1,6 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  lobbyCostMnt,
+  prizePoolMntSchema,
+  prizeShareMnt,
+  winnerPayoutMnt,
+} from "@bulaa/shared";
+import {
   averageTier,
   entryDenial,
   nextFreeSeat,
@@ -8,11 +14,11 @@ import {
   planJoin,
   planLeave,
   tierForMmr,
-  type SeatedMember,
+  type LobbyMember,
 } from "./rules";
 
-function seat(userId: string, seatNo: number, seatedAt: string): SeatedMember {
-  return { userId, seat: seatNo, seatedAt: new Date(seatedAt) };
+function member(userId: string, seatNo: number, joinedAt: string): LobbyMember {
+  return { userId, seat: seatNo, joinedAt: new Date(joinedAt) };
 }
 
 describe("tierForMmr", () => {
@@ -33,11 +39,11 @@ describe("tierForMmr", () => {
 });
 
 describe("averageTier", () => {
-  it("uses the host tier when nobody is seated", () => {
+  it("falls back to the host tier when the lobby has no members", () => {
     assert.deepEqual(averageTier(1850, []), { label: "1-1", band: "mid" });
   });
 
-  it("maps the mean seated MMR and ignores the unseated host", () => {
+  it("maps the mean member MMR", () => {
     assert.deepEqual(averageTier(2400, [2200, 1800]), {
       label: "Semi-Pro",
       band: "pro",
@@ -46,6 +52,22 @@ describe("averageTier", () => {
       label: "3-2",
       band: "low",
     });
+  });
+});
+
+describe("prize pool money", () => {
+  it("splits the pool into ten shares and five winner payouts", () => {
+    assert.equal(prizeShareMnt(500_000), 50_000);
+    assert.equal(winnerPayoutMnt(500_000), 100_000);
+    assert.equal(lobbyCostMnt(30_000, 5_000), 8_000);
+  });
+
+  it("accepts 30,000 to 500,000 MNT in whole shares only", () => {
+    assert.equal(prizePoolMntSchema.safeParse(30_000).success, true);
+    assert.equal(prizePoolMntSchema.safeParse(500_000).success, true);
+    assert.equal(prizePoolMntSchema.safeParse(29_990).success, false);
+    assert.equal(prizePoolMntSchema.safeParse(500_010).success, false);
+    assert.equal(prizePoolMntSchema.safeParse(30_005).success, false);
   });
 });
 
@@ -62,35 +84,32 @@ describe("nextFreeSeat", () => {
 });
 
 describe("entryDenial", () => {
-  const funded = { balanceMnt: 55_000, membership: null };
+  const funded = { balanceMnt: 55_000, costMnt: 55_000, membership: null };
 
-  it("allows active and restricted callers holding 55,000 MNT", () => {
+  it("allows active and restricted callers who cover the cost", () => {
     assert.equal(entryDenial({ status: "active", ...funded }), null);
     assert.equal(entryDenial({ status: "restricted", ...funded }), null);
   });
 
   it("rejects banned and pending_phone callers", () => {
     assert.equal(entryDenial({ status: "banned", ...funded }), "banned");
-    assert.equal(
-      entryDenial({ status: "pending_phone", ...funded }),
-      "phone_required",
-    );
+    assert.equal(entryDenial({ status: "pending_phone", ...funded }), "phone_required");
   });
 
-  it("rejects a caller already hosting or seated", () => {
+  it("rejects a caller already in a lobby", () => {
     assert.equal(
       entryDenial({
+        ...funded,
         status: "active",
-        balanceMnt: 55_000,
         membership: { lobbyId: "l1", role: "host" },
       }),
       "already_in_lobby",
     );
   });
 
-  it("rejects a balance under 55,000 MNT", () => {
+  it("rejects a balance under the lobby cost", () => {
     assert.equal(
-      entryDenial({ status: "active", balanceMnt: 54_999, membership: null }),
+      entryDenial({ ...funded, status: "active", balanceMnt: 54_999 }),
       "insufficient_balance",
     );
   });
@@ -117,11 +136,11 @@ describe("planJoin", () => {
 });
 
 describe("nextHost", () => {
-  it("picks the earliest seated, then the lowest seat", () => {
+  it("picks the earliest joined, then the lowest seat", () => {
     const members = [
-      seat("late", 0, "2026-09-27T10:05:00Z"),
-      seat("tieHigh", 4, "2026-09-27T10:00:00Z"),
-      seat("tieLow", 2, "2026-09-27T10:00:00Z"),
+      member("late", 0, "2026-09-27T10:05:00Z"),
+      member("tieHigh", 4, "2026-09-27T10:00:00Z"),
+      member("tieLow", 2, "2026-09-27T10:00:00Z"),
     ];
     assert.equal(nextHost(members)?.userId, "tieLow");
   });
@@ -133,39 +152,28 @@ describe("nextHost", () => {
 
 describe("planLeave", () => {
   const members = [
-    seat("a", 0, "2026-09-27T10:00:00Z"),
-    seat("b", 1, "2026-09-27T10:01:00Z"),
+    member("a", 0, "2026-09-27T10:00:00Z"),
+    member("b", 1, "2026-09-27T10:01:00Z"),
   ];
 
-  it("rejects a caller who is neither host nor seated", () => {
+  it("rejects a caller who is neither host nor member", () => {
     assert.deepEqual(planLeave("host", members, "stranger"), {
       kind: "not_in_lobby",
     });
   });
 
   it("only frees the seat when a non-host member leaves", () => {
-    assert.deepEqual(planLeave("host", members, "b"), { kind: "free_seat" });
+    assert.deepEqual(planLeave("a", members, "b"), { kind: "free_seat" });
   });
 
-  it("hands host to the longest-seated member when an unseated host leaves", () => {
-    assert.deepEqual(planLeave("host", members, "host"), {
-      kind: "transfer_host",
-      hostUserId: "a",
-    });
-  });
-
-  it("hands host to someone else when a seated host leaves", () => {
+  it("hands host to the longest-joined remaining member", () => {
     assert.deepEqual(planLeave("a", members, "a"), {
       kind: "transfer_host",
       hostUserId: "b",
     });
   });
 
-  it("cancels when the host leaves an empty lobby", () => {
-    assert.deepEqual(planLeave("host", [], "host"), { kind: "cancel" });
-  });
-
-  it("cancels when a seated host was the last member", () => {
+  it("cancels when the host was the last member", () => {
     assert.deepEqual(planLeave("a", [members[0]!], "a"), { kind: "cancel" });
   });
 });

@@ -1,0 +1,7 @@
+$kind: collection
+name: Bulaa API
+description: Bulaa backend HTTP API (local dev defaults).
+variables:
+  - key: baseUrl
+    value: 'http://localhost:3101'
+    description: Fastify backend origin (PORT from apps/backend)

@@ -1,0 +1,8 @@
+cloudResources:
+  collections:
+    ../postman/collections/Bulaa API: 35180764-6663de89-fba1-4cab-84f8-d88283f0743d
+  environments:
+    ../postman/environments/Local Development.environment.yaml: 35180764-d3ad0560-26e3-4703-92b5-92148150eaab
+workspace:
+  id: 7789f8c6-94a4-467b-9d8b-24cbd946cd21
+  name: bulaa

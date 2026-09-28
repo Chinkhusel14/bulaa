@@ -1,0 +1,6 @@
+$kind: http-request
+id: 9183c3df737cffd11c0fba05
+name: me
+method: GET
+url: '{{baseUrl}}/api/auth/me'
+description: Current session user. Requires bulaa_session cookie from Steam login.

@@ -1,0 +1,6 @@
+$kind: http-request
+id: 67252a7f3c64ce6729947766
+name: steam login
+method: GET
+url: '{{baseUrl}}/api/auth/steam'
+description: Starts Steam OpenID login (302 redirect to steamcommunity.com). Complete in a browser; session cookie bulaa_session is set after callback.

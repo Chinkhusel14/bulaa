@@ -1,9 +1,3 @@
-/** Entry fee per player (MNT). Server cost is separate. */
-export const ENTRY_FEE_MNT = 10_000;
-
-/** Server cost allocation per player (MNT). */
-export const SERVER_COST_PER_PLAYER_MNT = 5_000;
-
 /** Captain draft pick timer (seconds). */
 export const DRAFT_PICK_SECONDS = 30;
 
@@ -50,12 +44,26 @@ export const ACCOUNT_STATUSES = [
 
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 
-/** Wallet balance required to create or join a lobby (MNT). */
-export const LOBBY_ENTRY_MNT = 55_000;
-
 export const LOBBY_SEAT_COUNT = 10;
 
-export const LOBBY_NAME_MAX_LENGTH = 32;
+/** Host-chosen prize pool bounds for one lobby (MNT, whole match). */
+export const LOBBY_PRIZE_POOL_MIN_MNT = 30_000;
+export const LOBBY_PRIZE_POOL_MAX_MNT = 500_000;
+
+/** Each player funds an equal share of the prize pool. */
+export function prizeShareMnt(prizePoolMnt: number): number {
+  return prizePoolMnt / LOBBY_SEAT_COUNT;
+}
+
+/** Each of the five winners takes an equal share of the prize pool. */
+export function winnerPayoutMnt(prizePoolMnt: number): number {
+  return prizePoolMnt / (LOBBY_SEAT_COUNT / 2);
+}
+
+/** Wallet balance a player needs to create or join a lobby. */
+export function lobbyCostMnt(prizePoolMnt: number, serverFeeMnt: number): number {
+  return prizeShareMnt(prizePoolMnt) + serverFeeMnt;
+}
 
 /** Redis pub/sub channel carrying the open lobby list. */
 export const LOBBIES_OPEN_CHANNEL = "lobbies:open";
@@ -69,7 +77,7 @@ export const LOBBY_ERROR_CODES = [
   "lobby_full",
   "lobby_closed",
   "not_in_lobby",
-  "invalid_name",
+  "invalid_prize_pool",
 ] as const;
 
 export type LobbyErrorCode = (typeof LOBBY_ERROR_CODES)[number];

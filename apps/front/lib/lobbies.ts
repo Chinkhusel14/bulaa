@@ -1,9 +1,6 @@
 "use client";
 
-import type {
-  LobbyListResponse,
-  LobbySnapshotMessage,
-} from "@bulaa/shared";
+import type { LobbyListResponse, LobbySnapshotMessage } from "@bulaa/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { API_URL, apiFetch } from "./api";
@@ -20,10 +17,10 @@ export function fetchLobbies(): Promise<LobbyListResponse> {
   return apiFetch<LobbyListResponse>("/api/lobbies");
 }
 
-export function createLobby(name: string): Promise<{ ok: true }> {
+export function createLobby(prizePoolMnt: number): Promise<{ ok: true }> {
   return apiFetch("/api/lobbies", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ prizePoolMnt }),
   });
 }
 

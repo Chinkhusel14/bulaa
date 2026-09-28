@@ -2,13 +2,7 @@ import { createLobbySchema, type LobbyListResponse } from "@bulaa/shared";
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { loadSessionUser } from "../auth/authenticate";
-import {
-  createLobby,
-  joinLobby,
-  leaveLobby,
-  loadViewer,
-  lobbyError,
-} from "./commands";
+import { createLobby, joinLobby, leaveLobby, loadViewer, lobbyError } from "./commands";
 import { loadOpenLobbies, publishOpenLobbies } from "./snapshot";
 
 const lobbyParamsSchema = z.object({ id: z.string().uuid() });
@@ -28,13 +22,18 @@ export const lobbyModule: FastifyPluginAsync = async (app) => {
       loadOpenLobbies(app.db),
       loadViewer(app.db, request.user.id),
     ]);
-    return { lobbies, viewer };
+    return { lobbies, viewer, serverFeeMnt: app.env.SERVER_FEE_MNT };
   });
 
   app.post("/lobbies", async (request) => {
     const body = createLobbySchema.safeParse(request.body);
-    if (!body.success) throw lobbyError("invalid_name");
-    await createLobby(app.db, request.user.id, body.data.name);
+    if (!body.success) throw lobbyError("invalid_prize_pool");
+    await createLobby(
+      app.db,
+      request.user.id,
+      body.data.prizePoolMnt,
+      app.env.SERVER_FEE_MNT,
+    );
     await publishOpenLobbies(app);
     return { ok: true };
   });

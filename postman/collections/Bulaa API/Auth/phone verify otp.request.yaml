@@ -1,0 +1,15 @@
+$kind: http-request
+id: 74969c79bb89773bfc106d87
+name: phone verify otp
+method: POST
+url: '{{baseUrl}}/api/auth/phone/verify'
+body:
+  type: json
+  content: |-
+    {
+      "phone": "+97699112233",
+      "code": "123456"
+    }
+headers:
+  - key: Content-Type
+    value: application/json

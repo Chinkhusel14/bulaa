@@ -1,0 +1,14 @@
+$kind: http-request
+id: 7de81158daa4255cef492358
+name: phone request otp
+method: POST
+url: '{{baseUrl}}/api/auth/phone/request'
+body:
+  type: json
+  content: |-
+    {
+      "phone": "+97699112233"
+    }
+headers:
+  - key: Content-Type
+    value: application/json

@@ -1,0 +1,7 @@
+name: Local Development
+values:
+  - key: baseUrl
+    value: 'http://localhost:3101'
+    enabled: true
+    type: default
+    description: Backend HOST:PORT (see apps/backend/.env.example)

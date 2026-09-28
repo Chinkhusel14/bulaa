@@ -1,0 +1,6 @@
+$kind: http-request
+id: 60b6ebf958bded0bc31a5e82
+name: logout
+method: POST
+url: '{{baseUrl}}/api/auth/logout'
+description: Clears session cookie.

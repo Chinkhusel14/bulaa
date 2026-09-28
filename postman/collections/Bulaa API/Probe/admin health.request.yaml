@@ -1,0 +1,6 @@
+$kind: http-request
+id: 197833d72957ee3cdcda8b29
+name: admin health
+method: GET
+url: '{{baseUrl}}/api/admin/health'
+description: Admin module health stub.
