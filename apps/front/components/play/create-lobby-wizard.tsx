@@ -11,6 +11,7 @@ import {
 } from "@bulaa/shared/constants";
 import { Button, cn } from "@bulaa/ui";
 import { X } from "@phosphor-icons/react/dist/ssr";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ActionError, Money, type Copy, type LobbyActions } from "./lobby-kit";
 
@@ -63,6 +64,7 @@ export function CreateLobbyWizard({
   actions: LobbyActions;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [step, setStep] = useState<Step>("prize");
   const [digits, setDigits] = useState(String(LOBBY_PRIZE_POOL_MIN_MNT));
@@ -88,7 +90,12 @@ export function CreateLobbyWizard({
         setStep("confirm");
         return;
       case "confirm":
-        if (!shortfall && (await actions.create(prizePool))) onClose();
+        if (shortfall) return;
+        const lobbyId = await actions.create(prizePool);
+        if (lobbyId) {
+          onClose();
+          router.push(`/play/${lobbyId}`);
+        }
         return;
       default: {
         const unhandled: never = step;
@@ -304,7 +311,7 @@ function ConfirmStep({
       </dl>
 
       <p className="text-text-faint text-[12px]">
-        Та хост болж 1-р суудлыг эзэлнэ. You host and take seat 1.
+        Та хост болж А багийн эхэнд орно. You host and join Team A first.
       </p>
     </div>
   );

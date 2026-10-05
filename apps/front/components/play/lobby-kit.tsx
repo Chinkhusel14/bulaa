@@ -12,6 +12,7 @@ import {
 import { Button, cn } from "@bulaa/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { LOBBIES_QUERY_KEY, createLobby, joinLobby, leaveLobby } from "@/lib/lobbies";
 import { formatMnt } from "@/lib/money";
 
@@ -74,6 +75,39 @@ const ERROR_COPY: Record<LobbyErrorCode, Copy> = {
     ),
     en: "Prize pool is out of range.",
   },
+  side_full: { mn: "Энэ баг дүүрсэн.", en: "That side is full." },
+  same_side: { mn: "Та аль хэдийн энэ багт байна.", en: "You are already on that side." },
+  roster_frozen: {
+    mn: "Багийн бүрэлдэхүүн түгжигдсэн.",
+    en: "The roster is frozen.",
+  },
+  not_captain: { mn: "Зөвхөн ахлагч сонгоно.", en: "Only the captain can choose." },
+  not_your_turn: { mn: "Таны ээлж биш.", en: "It is not your turn." },
+  map_taken: { mn: "Энэ газрыг аль хэдийн сонгосон.", en: "That map is already taken." },
+  vote_unavailable: {
+    mn: "Одоо санал хураах боломжгүй.",
+    en: "A vote cannot be started now.",
+  },
+  vote_cooldown: {
+    mn: "Энэ тоглогчид саяхан санал хураасан.",
+    en: "That player is still in cooldown.",
+  },
+  already_voting: {
+    mn: "Нээлттэй санал аль хэдийн байна.",
+    en: "A vote is already open.",
+  },
+  chat_rate_limited: {
+    mn: "Хэт олон мессеж илгээлээ. Түр хүлээнэ үү.",
+    en: "Too many messages. Wait a moment.",
+  },
+  message_too_long: {
+    mn: "Мессеж хэт урт байна.",
+    en: "That message is too long.",
+  },
+  not_accepting: {
+    mn: "Одоо зөвшөөрөх шат биш.",
+    en: "The lobby is not in the accept window.",
+  },
 };
 
 const FALLBACK_ERROR: Copy = {
@@ -81,7 +115,7 @@ const FALLBACK_ERROR: Copy = {
   en: "Something went wrong. Try again.",
 };
 
-function errorCopy(code: string): Copy {
+export function errorCopy(code: string): Copy {
   return (LOBBY_ERROR_CODES as readonly string[]).includes(code)
     ? ERROR_COPY[code as LobbyErrorCode]
     : FALLBACK_ERROR;
@@ -187,19 +221,18 @@ export function useLobbyActions() {
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<Copy | null>(null);
 
-  async function run(key: string, action: () => Promise<unknown>): Promise<boolean> {
+  async function run<T>(key: string, action: () => Promise<T>): Promise<T | null> {
     setPendingKey(key);
     setError(null);
-    let ok = true;
+    let result: T | null = null;
     try {
-      await action();
+      result = await action();
     } catch (e: unknown) {
-      ok = false;
       setError(errorCopy(e instanceof Error ? e.message : ""));
     }
     await queryClient.invalidateQueries({ queryKey: LOBBIES_QUERY_KEY });
     setPendingKey(null);
-    return ok;
+    return result;
   }
 
   return {
@@ -207,8 +240,9 @@ export function useLobbyActions() {
     error,
     busy: pendingKey !== null,
     clearError: () => setError(null),
-    create: (prizePoolMnt: number) => run("create", () => createLobby(prizePoolMnt)),
-    join: (id: string) => run(id, () => joinLobby(id)),
+    create: (prizePoolMnt: number) =>
+      run("create", async () => (await createLobby(prizePoolMnt)).lobbyId),
+    join: (id: string) => run(id, async () => (await joinLobby(id)).lobbyId),
     leave: (id: string) => run(id, () => leaveLobby(id)),
   };
 }
@@ -311,6 +345,7 @@ export function SeatAction({
   actions: LobbyActions;
   className?: string;
 }) {
+  const router = useRouter();
   const pending = actions.pendingKey === lobby.id;
   if (viewer.lobbyId === lobby.id) {
     return (
@@ -331,7 +366,10 @@ export function SeatAction({
     <Button
       size="lg"
       className={className}
-      onClick={() => actions.join(lobby.id)}
+      onClick={async () => {
+        const lobbyId = await actions.join(lobby.id);
+        if (lobbyId) router.push(`/play/${lobbyId}`);
+      }}
       disabled={actions.busy || blocker !== null || full}
       title={blocker ? BLOCKER_TITLE[blocker] : full ? "Lobby full" : undefined}
     >

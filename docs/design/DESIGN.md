@@ -29,7 +29,7 @@ import "@bulaa/design/tokens.css";
 
 ## Personality (copy & UI)
 
-- Short, imperative: "Play." "Join." "Ready." "Start." "Server ready."
+- Short, imperative: "Play." "Join." "Ready." "Accept." "Decline." "Ban." "Pick." "Server ready."
 - Prefer: lobby, seat, host, entry, prize pool, payout, escrow, vote kick
 - Do not use as primary verbs: Find Match, Your pick, draft
 - Avoid casino words: jackpot, bet, spin, odds
@@ -114,7 +114,10 @@ Lobby browser specifics (the Scout layout: filterable list plus a detail pane, w
 - Average rank on a lobby card is a tier badge with a left accent bar, using `tierPro` / `tierMid` / `tierLow`
 - Occupancy and ready counts are mono with tabular nums, same treatment as IDs
 - The detail pane shows the joiner's cost as prize share + server fee = total, all in `money`
-- One primary CTA per view. Join on the browser, Ready in the room, Start for the host only. Create lobby is a secondary button in the browser header
+- One primary CTA per view. Join on the browser, Ready in the room. Create lobby is a secondary button in the browser header
 - Create lobby opens a modal wizard (native `<dialog>`, `bgRaised` panel with a `borderStrong` hairline, `bgVoid` backdrop). There are two steps: prize pool, then confirm. The server fee is shown read-only, and the wizard's own primary is Continue / Create
+- Lobby room while `open` or `accepting`: Team A column left, live chat center, Team B column right. Five slots per side. Members pack to the top. Empty slots sit only under the last member. Narrow viewports stack Team A, center, Team B
+- Ready is the only room primary while `open`. Unready is that same button flipped. Accept opens a native dialog for every member while `accepting`. Accept is that dialog's only primary. Decline is secondary
+- During ban/pick the team columns stay. The center becomes seven map tiles, a turn banner, and Ban / Pick / Decider stamps. Chat sits under the board. Only the acting captain can click a remaining map
 
 Copy: follow the abandoned-words rule (`.cursor/rules/abandoned-words.mdc`). For lobby membership, say "joined" / "орсон" or "in the lobby" / "лобби-д байна".

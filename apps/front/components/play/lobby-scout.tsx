@@ -12,6 +12,7 @@ import {
   winnerPayoutMnt,
 } from "@bulaa/shared/constants";
 import { Button, cn } from "@bulaa/ui";
+import Link from "next/link";
 import { MagnifyingGlass, Plus, X } from "@phosphor-icons/react/dist/ssr";
 import { useState, type ReactNode } from "react";
 import type { AuthUser } from "@/lib/api";
@@ -133,14 +134,21 @@ export function LobbyScout({
             </span>
           </p>
         </div>
-        <Button
-          variant="secondary"
-          onClick={() => toggleWizard(true)}
-          disabled={account !== null}
-        >
-          <Plus weight="bold" />
-          Лобби үүсгэх
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {viewer.lobbyId && (
+            <Button variant="secondary" asChild>
+              <Link href={`/play/${viewer.lobbyId}`}>Лобби руу / Open room</Link>
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => toggleWizard(true)}
+            disabled={account !== null}
+          >
+            <Plus weight="bold" />
+            Лобби үүсгэх
+          </Button>
+        </div>
       </div>
 
       {account && <BlockerNotice blocker={account} />}

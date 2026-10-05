@@ -19,6 +19,7 @@ import { registerDb } from "./plugins/db";
 import { registerRedis } from "./plugins/redis";
 import { registerSession } from "./plugins/session";
 import { registerWebsocket } from "./plugins/websocket";
+import { startLobbySweeper } from "./modules/lobby/sweeper";
 import { registerRealtime } from "./realtime";
 
 declare module "fastify" {
@@ -58,6 +59,11 @@ export async function buildApp(env: Env) {
   await app.register(adminModule, { prefix: "/api" });
 
   await registerRealtime(app);
+
+  const stopSweeper = startLobbySweeper(app);
+  app.addHook("onClose", async () => {
+    stopSweeper();
+  });
 
   return app;
 }
