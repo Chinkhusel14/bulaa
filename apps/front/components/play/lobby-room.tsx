@@ -101,6 +101,7 @@ export function LobbyRoomView({
   const now = useNow(250);
   const [error, setError] = useState<Copy | null>(null);
   const [pending, setPending] = useState<string | null>(null);
+  const [votePickerOpen, setVotePickerOpen] = useState(false);
 
   async function run(key: string, action: () => Promise<unknown>): Promise<boolean> {
     setPending(key);
@@ -124,15 +125,26 @@ export function LobbyRoomView({
   const canLeave = room.status === "open" || room.status === "accepting";
   const showReady = room.status === "open";
   const showVeto = room.status === "veto" || room.status === "awaiting_server";
+  const canStartVote =
+    (room.status === "open" || room.status === "accepting") &&
+    room.players.length >= VOTE_MIN_MEMBERS &&
+    room.vote === null;
+
+  function openVotePicker() {
+    if (room?.vote) {
+      setError(errorCopy("already_voting"));
+      return;
+    }
+    setVotePickerOpen(true);
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-text text-2xl font-semibold">Лобби өрөө</h1>
-          <p className="text-text-muted mt-1 text-[13px]">Lobby room</p>
-          <p className="tabular-money mt-2 text-[15px] font-medium">
-            <Money amount={room.prizePoolMnt} />
+          <p className="text-text-muted mt-1 text-[13px]">
+            Баг, чат, бэлэн / Teams, chat, Ready
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -160,16 +172,6 @@ export function LobbyRoomView({
       </header>
 
       {error && <ActionError error={error} />}
-      {room.vote && (
-        <VoteBanner
-          room={room}
-          now={now}
-          busy={pending !== null}
-          onBallot={(yes) =>
-            run(yes ? "yes" : "no", () => castLobbyBallot(lobbyId, room.vote!.id, yes))
-          }
-        />
-      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)]">
         <TeamColumn
@@ -178,7 +180,6 @@ export function LobbyRoomView({
           viewer={viewer}
           busy={pending !== null}
           onMove={() => run("side-a", () => moveLobbySide(lobbyId, "a"))}
-          onVote={(userId) => run("vote", () => startLobbyVote(lobbyId, userId))}
         />
         <section className="flex min-h-80 flex-col gap-3">
           {showVeto ? (
@@ -194,6 +195,7 @@ export function LobbyRoomView({
                 compact
                 busy={pending !== null}
                 onSend={(body) => run("chat", () => postLobbyMessage(lobbyId, body))}
+                onVoteCommand={openVotePicker}
               />
             </>
           ) : (
@@ -202,6 +204,7 @@ export function LobbyRoomView({
               compact={false}
               busy={pending !== null}
               onSend={(body) => run("chat", () => postLobbyMessage(lobbyId, body))}
+              onVoteCommand={openVotePicker}
             />
           )}
         </section>
@@ -211,9 +214,32 @@ export function LobbyRoomView({
           viewer={viewer}
           busy={pending !== null}
           onMove={() => run("side-b", () => moveLobbySide(lobbyId, "b"))}
-          onVote={(userId) => run("vote", () => startLobbyVote(lobbyId, userId))}
         />
       </div>
+
+      {votePickerOpen && (
+        <VotePicker
+          room={room}
+          canStart={canStartVote}
+          busy={pending !== null}
+          onClose={() => setVotePickerOpen(false)}
+          onPick={async (userId) => {
+            const ok = await run("vote", () => startLobbyVote(lobbyId, userId));
+            if (ok) setVotePickerOpen(false);
+          }}
+        />
+      )}
+
+      {room.vote && (
+        <VoteCall
+          room={room}
+          now={now}
+          busy={pending !== null}
+          onBallot={(yes) =>
+            run(yes ? "yes" : "no", () => castLobbyBallot(lobbyId, room.vote!.id, yes))
+          }
+        />
+      )}
 
       {room.status === "accepting" && (
         <AcceptDialog
@@ -235,14 +261,12 @@ function TeamColumn({
   viewer,
   busy,
   onMove,
-  onVote,
 }: {
   side: Side;
   room: LobbyRoom;
   viewer: LobbyRoomPlayer | undefined;
   busy: boolean;
   onMove: () => void;
-  onVote: (userId: string) => void;
 }) {
   const members = room.players.filter((p) => p.side === side).sort((a, b) => a.slot - b.slot);
   const label = sideLabel(side);
@@ -251,10 +275,6 @@ function TeamColumn({
     viewer !== undefined &&
     viewer.side !== side &&
     members.length < SIDE_SIZE;
-  const canVote =
-    (room.status === "open" || room.status === "accepting") &&
-    room.players.length >= VOTE_MIN_MEMBERS &&
-    room.vote === null;
 
   return (
     <section className="border-border bg-raised flex flex-col gap-2 rounded-md border p-3">
@@ -270,12 +290,7 @@ function TeamColumn({
           if (player) {
             return (
               <li key={player.userId}>
-                <PlayerCard
-                  player={player}
-                  showVote={canVote && player.userId !== room.viewerUserId}
-                  busy={busy}
-                  onVote={() => onVote(player.userId)}
-                />
+                <PlayerCard player={player} />
               </li>
             );
           }
@@ -303,17 +318,7 @@ function TeamColumn({
   );
 }
 
-function PlayerCard({
-  player,
-  showVote,
-  busy,
-  onVote,
-}: {
-  player: LobbyRoomPlayer;
-  showVote: boolean;
-  busy: boolean;
-  onVote: () => void;
-}) {
+function PlayerCard({ player }: { player: LobbyRoomPlayer }) {
   return (
     <div className="border-border bg-base flex items-center gap-2 rounded-sm border px-2 py-1.5">
       {player.avatarUrl ? (
@@ -336,25 +341,24 @@ function PlayerCard({
           {player.ready && <span className="text-primary text-[11px]">Ready</span>}
         </div>
       </div>
-      {showVote && (
-        <Button variant="ghost" size="sm" onClick={onVote} disabled={busy}>
-          Хөөх
-        </Button>
-      )}
     </div>
   );
 }
+
+const VOTE_COMMAND = /^\/votekick\s*$/i;
 
 function ChatPanel({
   room,
   compact,
   busy,
   onSend,
+  onVoteCommand,
 }: {
   room: LobbyRoom;
   compact: boolean;
   busy: boolean;
   onSend: (body: string) => Promise<boolean>;
+  onVoteCommand: () => void;
 }) {
   const [body, setBody] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -373,6 +377,13 @@ function ChatPanel({
     event.preventDefault();
     const next = body.trim();
     if (!next) return;
+    if (VOTE_COMMAND.test(next)) {
+      if (await onSend(next)) {
+        setBody("");
+        onVoteCommand();
+      }
+      return;
+    }
     if (await onSend(next)) setBody("");
   }
 
@@ -405,7 +416,7 @@ function ChatPanel({
             value={body}
             onChange={(e) => setBody(e.target.value.slice(0, CHAT_MAX_LENGTH))}
             maxLength={CHAT_MAX_LENGTH}
-            placeholder="Бичих / Type"
+            placeholder="Бичих / Type · /votekick"
             className="border-border bg-base text-text placeholder:text-text-faint h-9 min-w-0 flex-1 rounded-sm border px-2 text-[13px] outline-none"
           />
           <Button type="submit" size="sm" disabled={busy || body.trim() === ""}>
@@ -417,7 +428,104 @@ function ChatPanel({
   );
 }
 
-function VoteBanner({
+function VotePicker({
+  room,
+  canStart,
+  busy,
+  onClose,
+  onPick,
+}: {
+  room: LobbyRoom;
+  canStart: boolean;
+  busy: boolean;
+  onClose: () => void;
+  onPick: (userId: string) => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closingRef = useRef(false);
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const others = room.players.filter((p) => p.userId !== room.viewerUserId);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    return () => {
+      closingRef.current = true;
+      if (dialog.open) dialog.close();
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="vote-picker-title"
+      className="border-border-strong bg-raised text-text backdrop:bg-void/80 m-auto w-[min(420px,calc(100%-2rem))] rounded-md border p-0"
+      onClose={() => {
+        if (closingRef.current) {
+          closingRef.current = false;
+          return;
+        }
+        onClose();
+      }}
+    >
+      <form method="dialog" className="flex flex-col gap-4 p-5">
+        <header>
+          <h2 id="vote-picker-title" className="font-display text-[22px] font-semibold leading-7">
+            Саналаар гаргах
+          </h2>
+          <p className="text-text-muted text-[13px]">Choose a player</p>
+        </header>
+        {canStart ? (
+          <ul className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+            {others.map((player) => (
+              <li key={player.userId}>
+                <button
+                  type="button"
+                  onClick={() => setTargetId(player.userId)}
+                  className={cn(
+                    "border-border flex w-full items-center gap-2 rounded-sm border px-2 py-2 text-left",
+                    targetId === player.userId
+                      ? "border-primary/40 bg-primary-muted"
+                      : "hover:bg-overlay",
+                  )}
+                >
+                  <PlayerName player={player} />
+                  <span className="text-text-faint ml-auto text-[11px]">
+                    {sideLabel(player.side).en}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-text-muted text-[13px]">
+            Санал одоо эхлэхгүй. Хамгийн багадаа {VOTE_MIN_MEMBERS} тоглогч, нээлттэй лобби,
+            өөр саналгүй байх ёстой.
+          </p>
+        )}
+        <div className="flex justify-end gap-2">
+          <Button type="submit" variant="secondary">
+            Болих / Cancel
+          </Button>
+          {canStart && (
+            <Button
+              type="button"
+              disabled={busy || targetId === null}
+              onClick={() => {
+                if (targetId) onPick(targetId);
+              }}
+            >
+              Санал эхлүүлэх / Start vote
+            </Button>
+          )}
+        </div>
+      </form>
+    </dialog>
+  );
+}
+
+function VoteCall({
   room,
   now,
   busy,
@@ -429,32 +537,88 @@ function VoteBanner({
   onBallot: (yes: boolean) => void;
 }) {
   const vote = room.vote;
+  const target = vote ? room.players.find((p) => p.userId === vote.targetUserId) : undefined;
+  const isTarget = vote?.targetUserId === room.viewerUserId;
+  const canBallot = vote !== null && vote.myBallot === null && !isTarget;
+  const left = vote ? (secondsLeft(vote.endsAt, now) ?? 0) : 0;
+
   if (!vote) return null;
-  const target = room.players.find((p) => p.userId === vote.targetUserId);
-  const left = secondsLeft(vote.endsAt, now) ?? 0;
-  const canBallot = vote.myBallot === null && room.viewerUserId !== vote.targetUserId;
+
   return (
-    <div className="border-border-strong bg-raised flex flex-col gap-2 rounded-md border px-4 py-3">
-      <p className="text-text text-[15px]">
-        {target?.displayName ?? "Тоглогч"}-г гаргах санал
-      </p>
-      <p className="text-text-muted text-[13px]">Vote kick in progress</p>
-      <div className="flex flex-wrap items-center gap-3 text-[13px]">
-        <span className="text-text">
-          Тийм / Yes {vote.yesCount}/{vote.threshold}
-        </span>
-        <span className={cn("font-mono tabular-nums", timerClass(left))}>{left}s</span>
-        {canBallot && (
-          <>
-            <Button size="sm" onClick={() => onBallot(true)} disabled={busy}>
-              Тийм / Yes
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => onBallot(false)} disabled={busy}>
-              Үгүй / No
-            </Button>
-          </>
-        )}
+    <div className="pointer-events-none fixed inset-x-0 top-16 z-30 flex justify-center px-4 lg:top-4">
+      <section
+        aria-labelledby="vote-call-title"
+        className="border-border-strong bg-raised pointer-events-auto w-[min(420px,100%)] rounded-md border shadow-none"
+      >
+        <div className="bg-overlay h-1 overflow-hidden">
+          <div
+            className={cn("h-full", left <= 5 ? "bg-danger" : left <= 10 ? "bg-warning" : "bg-primary")}
+            style={{ width: `${Math.max(0, Math.min(100, (left / 30) * 100))}%` }}
+          />
+        </div>
+        <div className="flex flex-col gap-3 p-3">
+          <div className="flex items-center gap-3">
+            {target?.avatarUrl ? (
+              <img src={target.avatarUrl} alt="" className="border-border size-9 rounded-sm border" />
+            ) : (
+              <span className="bg-overlay border-border size-9 rounded-sm border" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p id="vote-call-title" className="text-text truncate text-[15px] font-medium">
+                {target?.displayName ?? "Тоглогч"}
+              </p>
+              <p className="text-text-muted text-[12px]">
+                {isTarget ? "Танд санал нээгдсэн / Vote against you" : "Саналаар гаргах / Vote"}
+              </p>
+            </div>
+            <span className={cn("font-mono text-[15px] tabular-nums", timerClass(left))}>{left}s</span>
+          </div>
+          <VoteTally yes={vote.yesCount} no={vote.noCount} need={vote.threshold} />
+          {canBallot ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={() => onBallot(true)} disabled={busy}>
+                Тийм
+              </Button>
+              <Button variant="secondary" onClick={() => onBallot(false)} disabled={busy}>
+                Үгүй
+              </Button>
+            </div>
+          ) : (
+            <p className="text-text-muted text-[12px]">
+              {isTarget
+                ? "Та санал өгөхгүй."
+                : vote.myBallot
+                  ? "Таны санал: Тийм"
+                  : "Таны санал: Үгүй"}
+            </p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function VoteTally({ yes, no, need }: { yes: number; no: number; need: number }) {
+  const slots = Math.max(need, 1);
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline justify-between text-[12px]">
+        <span className="text-primary font-medium">Тийм {yes}</span>
+        <span className="text-text-muted">хэрэгтэй {need}</span>
       </div>
+      <div
+        className="flex gap-1"
+        role="img"
+        aria-label={`${yes} yes, ${need} needed, ${no} no`}
+      >
+        {Array.from({ length: slots }, (_, index) => (
+          <span
+            key={index}
+            className={cn("h-2 flex-1 rounded-sm", index < yes ? "bg-primary" : "bg-overlay")}
+          />
+        ))}
+      </div>
+      <p className="text-text-muted text-[12px]">Үгүй {no}</p>
     </div>
   );
 }

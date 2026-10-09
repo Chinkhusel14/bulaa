@@ -29,6 +29,13 @@
       "when": 1790650000000,
       "tag": "0003_lobby_room",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790680000000,
+      "tag": "0004_vote_rejoin_block",
+      "breakpoints": true
     }
   ]
 }

@@ -6,12 +6,28 @@ import type {
   LobbyRoom,
   LobbyRoomMessage,
   LobbySnapshotMessage,
+  LobbySummary,
   MapId,
   Side,
 } from "@bulaa/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { API_URL, apiFetch } from "./api";
+
+function lobbyRowSignature(l: LobbySummary): string {
+  return `${l.occupancy}:${l.readyCount}`;
+}
+
+function diffFlashIds(prev: Map<string, string>, next: LobbySummary[]): string[] {
+  const changed: string[] = [];
+  for (const lobby of next) {
+    const sig = lobbyRowSignature(lobby);
+    const old = prev.get(lobby.id);
+    if (old !== undefined && old !== sig) changed.push(lobby.id);
+    prev.set(lobby.id, sig);
+  }
+  return changed;
+}
 
 export const LOBBIES_QUERY_KEY = ["lobbies"] as const;
 
@@ -111,11 +127,36 @@ export function vetoLobbyMap(id: string, map: MapId): Promise<{ ok: true }> {
 /** Paints from GET, then swaps in live public rows while keeping the viewer's own fields. */
 export function useLobbies(enabled: boolean) {
   const queryClient = useQueryClient();
+  const [flashIds, setFlashIds] = useState<ReadonlySet<string>>(() => new Set());
+  const signaturesRef = useRef<Map<string, string>>(new Map());
+  const seededRef = useRef(false);
+
   const query = useQuery({
     queryKey: LOBBIES_QUERY_KEY,
     queryFn: fetchLobbies,
     enabled,
   });
+
+  function applyFlash(next: LobbySummary[]) {
+    if (!seededRef.current) {
+      diffFlashIds(signaturesRef.current, next);
+      seededRef.current = true;
+      return;
+    }
+    const ids = diffFlashIds(signaturesRef.current, next);
+    if (ids.length === 0) return;
+    setFlashIds(new Set(ids));
+    const timer = window.setTimeout(() => setFlashIds(new Set()), 700);
+    return timer;
+  }
+
+  useEffect(() => {
+    if (!query.data?.lobbies) return;
+    const timer = applyFlash(query.data.lobbies);
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [query.data?.lobbies]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -135,7 +176,7 @@ export function useLobbies(enabled: boolean) {
     return () => socket.close();
   }, [enabled, queryClient]);
 
-  return query;
+  return { ...query, flashIds };
 }
 
 export function useLobbyRoom(lobbyId: string, enabled: boolean) {

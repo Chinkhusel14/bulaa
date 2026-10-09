@@ -3,7 +3,6 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { LobbyRoomView } from "@/components/play/lobby-room";
-import { PlayHeader } from "@/components/play/play-header";
 import { useLobbyRoom } from "@/lib/lobbies";
 import { useAuth } from "@/lib/use-auth";
 
@@ -28,14 +27,13 @@ export default function LobbyRoomPage() {
     }
   }, [room.error, router]);
 
+  useEffect(() => {
+    if (!room.data || !user) return;
+    const stillHere = room.data.players.some((player) => player.userId === user.id);
+    if (!stillHere) router.replace("/play");
+  }, [room.data, user, router]);
+
   if (isLoading || !user || user.status === "pending_phone") return null;
 
-  return (
-    <div className="bg-void flex min-h-dvh flex-col">
-      <PlayHeader user={user} balanceMnt={null} />
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-        <LobbyRoomView lobbyId={lobbyId} room={room.data} isError={room.isError} />
-      </main>
-    </div>
-  );
+  return <LobbyRoomView lobbyId={lobbyId} room={room.data} isError={room.isError} />;
 }

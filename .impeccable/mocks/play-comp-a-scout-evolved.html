@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8" />
+  <title>Bulaa Play — Comp A Scout evolved (approved)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: "IBM Plex Sans", sans-serif; background: #070809; color: #f4f6f8; font-size: 15px; line-height: 1.45; }
+    .bar { height: 56px; border-bottom: 1px solid #2a3140; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #070809; }
+    .brand { font-family: "Chakra Petch", sans-serif; font-weight: 600; }
+    .money { color: #ffe66b; font-variant-numeric: tabular-nums; font-weight: 500; }
+    main { max-width: 1024px; margin: 0 auto; padding: 32px 24px; display: flex; flex-direction: column; gap: 24px; }
+    h1 { font-family: "Chakra Petch", sans-serif; font-size: 24px; font-weight: 600; }
+    .filters { border-block: 1px solid #2a3140; padding: 12px 0; display: flex; gap: 12px; flex-wrap: wrap; }
+    .split { display: grid; grid-template-columns: 44% 56%; gap: 24px; }
+    .row { padding: 10px 12px; border-radius: 5px; border: 1px solid transparent; display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; }
+    .row.sel { background: #c8f54226; border-color: #3d4658; }
+    .row.flash { background: #c8f54226; }
+    .mission { background: #14181f; border: 1px solid #3d4658; border-radius: 5px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .prize { font-size: 20px; color: #ffe66b; font-weight: 500; }
+    .btn-p { background: #c8f542; color: #0a0c08; border: none; border-radius: 5px; height: 40px; font-weight: 500; width: 100%; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+    .tier-bar { width: 3px; height: 16px; background: #6b9bff; border-radius: 4px; display: inline-block; vertical-align: middle; margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <div><span class="brand">Bulaa</span> <span style="color:#8b93a7;margin-left:12px">Play</span></div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <span class="money">₮ 500,000</span>
+      <span style="font-size:13px;color:#8b93a7">Dev ▾</span>
+    </div>
+  </header>
+  <main>
+    <div style="display:flex;justify-content:space-between;align-items:end">
+      <div><h1>Лобби сонгох</h1><p style="font-size:13px;color:#8b93a7;margin-top:4px">Open lobbies <span class="mono">4/4</span></p></div>
+      <button style="background:#14181f;border:1px solid #2a3140;color:#f4f6f8;height:40px;padding:0 16px;border-radius:5px">+ Лобби үүсгэх</button>
+    </div>
+    <div class="filters"><input placeholder="Хост хайх" style="flex:1;min-width:200px;height:36px;background:#0c0e12;border:1px solid #2a3140;border-radius:5px;color:#f4f6f8;padding:0 12px" /></div>
+    <div class="split">
+      <div>
+        <div class="row flash"><div><strong>Dev Player 3</strong><div class="money" style="font-size:13px">₮ 30,000</div></div><span class="mono"><span class="tier-bar"></span>1-2</span><span class="mono">7/10</span></div>
+        <div class="row sel"><div><strong>nightowl</strong><div class="money" style="font-size:13px">₮ 50,000</div></div><span class="mono"><span class="tier-bar" style="background:#c8f542"></span>Semi-Pro</span><span class="mono">5/10</span></div>
+        <div class="row"><div><strong>bat_cs</strong><div class="money" style="font-size:13px">₮ 30,000</div></div><span class="mono"><span class="tier-bar" style="background:#8b93a7"></span>2-1</span><span class="mono">2/10</span></div>
+      </div>
+      <section class="mission" aria-label="Mission card">
+        <p style="font-size:12px;color:#5c6578">Хост · 4m</p>
+        <h2 style="font-family:'Chakra Petch',sans-serif;font-size:24px">nightowl</h2>
+        <div><p style="font-size:13px;color:#8b93a7">Шагналын сан</p><p class="prize">₮ 50,000</p></div>
+        <p class="mono" style="color:#8b93a7">████░░░░░░ seats · 3 ready</p>
+        <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#8b93a7">Total</span><span class="money">₮ 10,000</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#8b93a7">After join</span><span class="money">₮ 490,000</span></div>
+        </div>
+        <button class="btn-p">Join</button>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

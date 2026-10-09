@@ -69,11 +69,11 @@ const ERROR_COPY: Record<LobbyErrorCode, Copy> = {
   invalid_prize_pool: {
     mn: (
       <>
-        Шагналын сан <Money amount={LOBBY_PRIZE_POOL_MIN_MNT} /> –{" "}
+        Ялагч бүрт <Money amount={LOBBY_PRIZE_POOL_MIN_MNT} /> –{" "}
         <Money amount={LOBBY_PRIZE_POOL_MAX_MNT} /> байна.
       </>
     ),
-    en: "Prize pool is out of range.",
+    en: "Per-winner payout is out of range.",
   },
   side_full: { mn: "Энэ баг дүүрсэн.", en: "That side is full." },
   same_side: { mn: "Та аль хэдийн энэ багт байна.", en: "You are already on that side." },
@@ -89,12 +89,16 @@ const ERROR_COPY: Record<LobbyErrorCode, Copy> = {
     en: "A vote cannot be started now.",
   },
   vote_cooldown: {
-    mn: "Энэ тоглогчид саяхан санал хураасан.",
-    en: "That player is still in cooldown.",
+    mn: "Санал дууссан. 2 минут хүлээнэ үү.",
+    en: "A vote just ended. Wait 2 minutes.",
   },
   already_voting: {
     mn: "Нээлттэй санал аль хэдийн байна.",
     en: "A vote is already open.",
+  },
+  rejoin_blocked: {
+    mn: "Саналаар гарсан тул 30 минут энэ лоббид орж чадахгүй.",
+    en: "A vote removed you. You can rejoin this lobby in 30 minutes.",
   },
   chat_rate_limited: {
     mn: "Хэт олон мессеж илгээлээ. Түр хүлээнэ үү.",

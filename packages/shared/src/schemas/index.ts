@@ -3,7 +3,6 @@ import {
   CHAT_MAX_LENGTH,
   LOBBY_PRIZE_POOL_MAX_MNT,
   LOBBY_PRIZE_POOL_MIN_MNT,
-  LOBBY_SEAT_COUNT,
   MAP_POOL,
   SIDES,
 } from "../constants/index";
@@ -85,13 +84,13 @@ export type EligibilityResult =
   | { ok: true; snapshot: SteamSnapshot }
   | { ok: false; code: z.infer<typeof authErrorCodeSchema> };
 
-// multipleOf keeps every player share and winner payout a whole tögrög.
+// Multiples of 10 keep per-winner payouts and ten-way entry shares whole tögrög.
 export const prizePoolMntSchema = z
   .number()
   .int()
   .min(LOBBY_PRIZE_POOL_MIN_MNT)
   .max(LOBBY_PRIZE_POOL_MAX_MNT)
-  .multipleOf(LOBBY_SEAT_COUNT);
+  .multipleOf(10);
 
 export const createLobbySchema = z.object({
   prizePoolMnt: prizePoolMntSchema,

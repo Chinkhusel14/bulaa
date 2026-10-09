@@ -114,7 +114,7 @@ flowchart TD
     KYC --> Deposit[Deposit MNT to Wallet via QPay]
     Deposit --> Play[Click Play - lobby browser]
     Play --> Pick["Browse lobbies by average rank, or create one"]
-    Pick --> Join["Join a seat - wallet locks prize share (pool / 10) + 5k server fee"]
+    Pick --> Join["Join a seat - wallet locks prize share (5 × P / 10) + 5k server fee"]
     Join --> Lobby["Chat, take a side, press Ready"]
     Lobby --> AllReady["10/10 Ready and 5+5 sides"]
     AllReady --> Accept["All 10 Accept"]
@@ -123,7 +123,7 @@ flowchart TD
     ServerReady --> Match[Players play 5v5 match]
     Match --> Scores[Each side submits the final score]
     Scores --> AdminConfirm[Admin confirms winner]
-    AdminConfirm --> Payout["Each winner credited pool / 5 to wallet"]
+    AdminConfirm --> Payout["Each winner credited P to wallet"]
     Payout --> Withdraw[Player withdraws to QPay/bank when ready]
 ```
 
@@ -147,12 +147,12 @@ flowchart TD
 - Wallet operations: `deposit`, `withdraw`, `escrow_hold`, `escrow_release`, `escrow_capture`, `payout_credit`, `refund`, `admin_adjustment`. Each one is an immutable ledger entry.
 - Deposits via QPay (primary). Recommend adding SocialPay + Khan Bank API + manual bank transfer (admin-confirmed) as fallbacks. Flag for stakeholder confirmation.
 - Withdrawals: player initiates, instant if same payment provider used to deposit, manual review for cross-channel or >threshold amounts.
-- Lobby pricing. The host picks the prize pool `P` when creating the lobby (6.3):
-  - `P` is the whole-match prize: 30,000 to 500,000 MNT, a multiple of 10. The client and server both validate it
-  - Prize share per player: `P / 10`
+- Lobby pricing. The host picks the per-winner payout `P` when creating the lobby (6.3):
+  - `P` is what each of the five winners receives: 30,000 to 500,000 MNT, a multiple of 10. The client and server both validate it
+  - Prize share per player (toward the five payouts): `(5 × P) / 10` = `P / 2`
   - Server fee per player: 5,000 MNT, a platform setting (`SERVER_FEE_MNT`). Players cannot change it
-  - Cost to create or join: `P / 10 + server fee`. The example below uses the default `P` = 30,000 MNT, which costs 8,000 MNT
-  - Payout to each of the 5 winners: `P / 5`
+  - Cost to create or join: `P / 2 + server fee`. Example: `P` = 30,000 MNT costs 20,000 MNT; `P` = 50,000 MNT costs 30,000 MNT
+  - Payout to each of the 5 winners: `P`
   - `P` and the server fee are both fixed on the lobby at creation. A later fee change never reprices an open lobby
 - Per-match flow, where `cost` is the lobby's create/join cost:
   1. Before a player creates or joins a lobby, verify `wallet.available_balance >= cost`
@@ -160,7 +160,7 @@ flowchart TD
   3. If the hold fails, deny the join and tell the player their balance dropped
   4. When a player leaves, or a vote kick removes them, `escrow_release(cost)`
   5. After all 10 Accept, all 10 holds stay in place until the result is settled
-  6. On admin-confirmed result: `escrow_capture(cost)` for all 10, then `payout_credit(P / 5)` to each of the 5 winners
+  6. On admin-confirmed result: `escrow_capture(cost)` for all 10, then `payout_credit(P)` to each of the 5 winners
 - Limits (configurable, sensible defaults):
   - Min deposit: 10,000 MNT
   - Max deposit per day: 2,000,000 MNT (KYC tier 1)
@@ -172,7 +172,7 @@ flowchart TD
 - Play opens a list of open lobbies. Players create the lobbies. The platform does not group players.
 - Lobbies have no name. Each lobby card shows:
   - Host name and host tier
-  - Prize pool
+  - Per-winner payout (`P`)
   - Occupancy as `n/10`
   - Ready count as `n/10`
   - Average displayed tier, the mean of the tiers of everyone in the lobby
@@ -182,8 +182,8 @@ flowchart TD
 - Optional soft warning: if the joiner's tier sits far from the lobby average, the join dialog says so. The gap that triggers the warning is configurable and it never blocks the join.
 - The list updates live. A new lobby, a seat change, and a closed lobby all appear without a page reload.
 - Create a lobby: any `active` player whose wallet covers the cost. Create opens a modal wizard with two steps:
-  1. Prize pool: the host enters an amount or picks a preset, and sees their share, the server fee, and the winner payout
-  2. Confirm: prize pool, winner payout, your share, the server fee (read-only), the total cost, and the wallet balance before and after
+  1. Per-winner payout: the host enters `P` or picks a preset, and sees entry share, server fee, and total cost
+  2. Confirm: per-winner payout, your share, the server fee (read-only), the total cost, and the wallet balance before and after
 - The creator becomes the host and joins Team A in slot 0.
 - Join a lobby: same balance and account-state check. Join is blocked once 10 seats are taken.
 - A player can be in one lobby at a time. `open`, `accepting`, `veto`, and `awaiting_server` all count. Creating or joining a second one is blocked until they leave the first.
@@ -217,15 +217,16 @@ flowchart TD
 
 Some players take a seat and never press Ready, which blocks the other 9. Vote kick is the members' own fix.
 
-- Any lobby member can start a vote against one other member.
+- Any lobby member starts a vote by typing `/votekick` in lobby chat. The line is posted in chat, then a picker of the other members opens. Confirming one member starts the vote.
+- Eligible members who are not the target see a non-blocking vote notice with Yes and No for the vote window. It does not lock the lobby room. Ignoring it is allowed. The target sees the same notice without a ballot.
 - A vote needs at least 3 members in the lobby. Below that, vote kick is unavailable.
 - Threshold: a majority of current members excluding the target, `ceil((n-1)/2)+1` yes votes.
 - The vote window is 30 seconds. A vote that misses the threshold in the window fails.
-- One active vote at a time per lobby. Cooldown of 2 minutes per target after a failed or successful vote.
+- One active vote at a time per lobby. After that vote passes or fails, the lobby waits 2 minutes before anyone can start another.
 - On success: the target loses their seat, `escrow_release(cost)` runs, and the seat reopens.
 - If the target sat not-Ready for more than 2 minutes before the vote passed, their behavior score takes a small hit (6.11).
 - If the target was the host, the host seat transfers to the remaining member who joined earliest.
-- A kicked player can join another lobby right away.
+- On success the target is removed from the room immediately. They cannot rejoin that lobby for 30 minutes. They can join a different lobby right away.
 - Vote kick is only available while the lobby is `open` or `accepting`. A kick during `accepting` cancels the accept prompt back to `open` without unreadies anyone. During `veto` and later, a missing player is a no-show and a Match Admin handles it.
 
 ### 6.7 Server Allocation and Match Lifecycle (MVP: manual)

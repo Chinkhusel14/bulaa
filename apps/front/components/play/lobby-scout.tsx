@@ -9,12 +9,13 @@ import type {
 import {
   LOBBY_SEAT_COUNT,
   prizeShareMnt,
+  totalWinnerPayoutMnt,
   winnerPayoutMnt,
 } from "@bulaa/shared/constants";
 import { Button, cn } from "@bulaa/ui";
 import Link from "next/link";
 import { MagnifyingGlass, Plus, X } from "@phosphor-icons/react/dist/ssr";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import type { AuthUser } from "@/lib/api";
 import { CreateLobbyWizard } from "./create-lobby-wizard";
 import {
@@ -35,7 +36,6 @@ import {
   isFull,
   joinCostMnt,
   roleCopy,
-  seatClass,
   tierBarClass,
   useLobbyActions,
   useNow,
@@ -84,10 +84,12 @@ export function LobbyScout({
   user,
   data,
   isError,
+  flashIds,
 }: {
   user: AuthUser;
   data: LobbyListResponse | undefined;
   isError: boolean;
+  flashIds: ReadonlySet<string>;
 }) {
   const actions = useLobbyActions();
   const now = useNow(30_000);
@@ -120,6 +122,13 @@ export function LobbyScout({
   function toggleWizard(open: boolean) {
     actions.clearError();
     setCreating(open);
+  }
+
+  function resetFilters() {
+    setQuery("");
+    setBand(null);
+    setHideFull(true);
+    setSort("fill");
   }
 
   return (
@@ -206,9 +215,9 @@ export function LobbyScout({
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,44fr)_minmax(0,56fr)]">
         {visible.length === 0 ? (
-          <div className="flex flex-col items-start gap-2 py-8">
+          <div className="flex flex-col items-start gap-3 py-8">
             <p className="text-text text-[15px]">
               {lobbies.length === 0
                 ? "Нээлттэй лобби алга."
@@ -219,6 +228,11 @@ export function LobbyScout({
                 ? "No lobby is open. Create one above."
                 : "No lobby matches these filters."}
             </p>
+            {lobbies.length > 0 && (
+              <Button variant="secondary" size="sm" onClick={resetFilters}>
+                Шүүлт цэвэрлэх / Reset filters
+              </Button>
+            )}
           </div>
         ) : (
           <ul className="flex flex-col gap-1" aria-label="Lobbies">
@@ -228,6 +242,7 @@ export function LobbyScout({
                   lobby={lobby}
                   viewer={viewer}
                   selected={lobby.id === detail?.id}
+                  flashing={flashIds.has(lobby.id)}
                   onSelect={() => setSelectedId(lobby.id)}
                   now={now}
                 />
@@ -237,7 +252,7 @@ export function LobbyScout({
         )}
 
         {detail && (
-          <DetailPane
+          <MissionCard
             lobby={detail}
             viewer={viewer}
             account={account}
@@ -297,12 +312,14 @@ function ListRow({
   lobby,
   viewer,
   selected,
+  flashing,
   onSelect,
   now,
 }: {
   lobby: LobbySummary;
   viewer: LobbyViewer;
   selected: boolean;
+  flashing: boolean;
   onSelect: () => void;
   now: number;
 }) {
@@ -315,8 +332,9 @@ function ListRow({
       className={cn(
         "grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 rounded-md border px-3 py-2.5 text-left transition-colors",
         "sm:grid-cols-[minmax(0,1fr)_88px_88px_40px]",
+        flashing && "animate-lobby-flash",
         selected
-          ? "border-border-strong bg-overlay"
+          ? "border-border-strong bg-[var(--primary-muted)]"
           : "hover:bg-raised border-transparent",
       )}
     >
@@ -325,7 +343,10 @@ function ListRow({
           {lobby.hostDisplayName}
           {isMine && <span className="text-primary ml-2 text-[12px]">· Таных</span>}
         </span>
-        <Money amount={lobby.prizePoolMnt} className="block text-[13px]" />
+        <span className="block text-[13px]">
+          <span className="text-text-faint text-[11px]">Win </span>
+          <Money amount={winnerPayoutMnt(lobby.prizePoolMnt)} className="inline text-[13px]" />
+        </span>
       </span>
       <TierBadge label={lobby.averageTier} band={lobby.averageTierBand} />
       <span className="col-span-2 flex items-center gap-2 sm:col-span-1">
@@ -341,7 +362,7 @@ function ListRow({
   );
 }
 
-function DetailPane({
+function MissionCard({
   lobby,
   viewer,
   account,
@@ -362,28 +383,29 @@ function DetailPane({
   const role = isMine && viewer.role ? roleCopy(viewer.role) : null;
   const cost = joinCostMnt(lobby);
   const after = viewer.balanceMnt - cost;
+  const shortfall = after < 0 ? -after : 0;
 
   return (
     <aside
-      aria-label="Lobby detail"
+      aria-label="Lobby mission"
       className={cn(
-        "border-border-strong bg-raised fixed inset-x-0 bottom-0 z-20 max-h-[80dvh] flex-col gap-5 overflow-y-auto border-t p-5",
-        "md:sticky md:top-6 md:z-auto md:flex md:max-h-none md:self-start md:rounded-md md:border",
-        openOnMobile ? "flex" : "hidden",
+        "border-border-strong bg-raised fixed inset-x-0 bottom-0 z-20 max-h-[85dvh] flex-col gap-5 overflow-y-auto border-t p-5",
+        "lg:sticky lg:top-6 lg:z-auto lg:flex lg:max-h-none lg:self-start lg:rounded-md lg:border lg:p-6",
+        openOnMobile ? "flex" : "hidden lg:flex",
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-text-faint text-[12px]">
             {role
               ? `${role.mn} · ${role.en}`
               : `Хост · ${formatAge(lobby.createdAt, now)}`}
           </p>
-          <h2 className="font-display text-text flex items-center gap-2 text-[24px] font-semibold leading-[30px]">
-            <span className="truncate">{lobby.hostDisplayName}</span>
+          <h2 className="font-display text-text mt-1 truncate text-[24px] font-semibold leading-[30px]">
+            {lobby.hostDisplayName}
           </h2>
-          <div className="mt-1">
-            <TierBadge label={lobby.hostTier} band={lobby.hostTierBand} />
+          <div className="mt-2">
+            <TierBadge label={lobby.averageTier} band={lobby.averageTierBand} />
           </div>
         </div>
         <Button
@@ -391,66 +413,36 @@ function DetailPane({
           size="icon"
           onClick={onClose}
           aria-label="Хаах"
-          className="md:hidden"
+          className="lg:hidden"
         >
           <X weight="bold" />
         </Button>
       </div>
 
-      <dl className="flex flex-col gap-1.5 text-[13px]">
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-text-muted">Шагналын сан / Prize pool</dt>
-          <dd>
-            <Money
-              amount={lobby.prizePoolMnt}
-              className="text-[20px] font-medium leading-6"
-            />
-          </dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-text-muted">Ялагч бүрт / Each winner</dt>
-          <dd>
-            <Money amount={winnerPayoutMnt(lobby.prizePoolMnt)} />
-          </dd>
-        </div>
-      </dl>
+      <div className="border-border border-y py-4">
+        <p className="text-text-muted text-[13px]">Ялагч бүрт / Each winner gets</p>
+        <Money
+          amount={winnerPayoutMnt(lobby.prizePoolMnt)}
+          className="mt-1 block text-[24px] font-medium leading-7"
+        />
+        <p className="text-text-muted mt-2 text-[13px]">
+          Нийт шагнал / Total to winners{" "}
+          <Money amount={totalWinnerPayoutMnt(lobby.prizePoolMnt)} className="inline text-[13px]" />
+        </p>
+      </div>
 
-      <div className="flex flex-col gap-2">
-        <ol className="grid grid-cols-5 gap-1" aria-label="Seats">
-          {Array.from({ length: LOBBY_SEAT_COUNT }, (_, i) => (
-            <li
-              key={i}
-              className={cn(
-                "flex h-9 items-center justify-center rounded-sm font-mono text-[12px] tabular-nums",
-                seatClass(i, lobby.occupancy, lobby.readyCount),
-                i < lobby.occupancy ? "text-primary-foreground" : "text-text-faint",
-              )}
-            >
-              {i + 1}
-            </li>
-          ))}
-        </ol>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <SeatMeter occupancy={lobby.occupancy} ready={lobby.readyCount} />
+          <span className="text-text-muted font-mono text-[13px] tabular-nums">
+            {lobby.occupancy}/{LOBBY_SEAT_COUNT} · {lobby.readyCount} ready
+          </span>
+        </div>
         <SeatLegend />
       </div>
 
-      <dl className="border-border grid grid-cols-3 gap-3 border-y py-3">
-        <Stat label="Дундаж / Avg">
-          <TierBadge label={lobby.averageTier} band={lobby.averageTierBand} />
-        </Stat>
-        <Stat label="Тоглогч / Players">
-          <span className="text-text font-mono text-[13px] tabular-nums">
-            {lobby.occupancy}/{LOBBY_SEAT_COUNT}
-          </span>
-        </Stat>
-        <Stat label="Бэлэн / Ready">
-          <span className="text-text font-mono text-[13px] tabular-nums">
-            {lobby.readyCount}/{LOBBY_SEAT_COUNT}
-          </span>
-        </Stat>
-      </dl>
-
       {!isMine && (
-        <dl className="flex flex-col gap-1.5 text-[13px]">
+        <dl className="bg-base border-border flex flex-col gap-2 rounded-md border p-4 text-[13px]">
           <div className="flex justify-between">
             <dt className="text-text-muted">Таны хувь / Your share</dt>
             <dd>
@@ -458,13 +450,13 @@ function DetailPane({
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-text-muted">Серверийн төлбөр / Server fee</dt>
+            <dt className="text-text-muted">Сервер / Server fee</dt>
             <dd>
               <Money amount={lobby.serverFeeMnt} />
             </dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-text">Нийт / Total, locked on join</dt>
+          <div className="border-border flex justify-between border-t pt-2">
+            <dt className="text-text font-medium">Нийт / Total on join</dt>
             <dd>
               <Money amount={cost} className="font-medium" />
             </dd>
@@ -475,10 +467,18 @@ function DetailPane({
               {after >= 0 ? (
                 <Money amount={after} />
               ) : (
-                <span className="text-danger">Хүрэлцэхгүй / Not enough</span>
+                <span className="text-danger font-medium">Хүрэлцэхгүй / Not enough</span>
               )}
             </dd>
           </div>
+          {shortfall > 0 && (
+            <p className="text-text-muted border-border border-t pt-2 text-[12px] leading-[18px]">
+              Deposit at least{" "}
+              <Money amount={shortfall} className="inline text-[12px]" /> when wallet
+              opens. / Хэтэвч идэвхжихэд{" "}
+              <Money amount={shortfall} className="inline text-[12px]" /> нэмнэ.
+            </p>
+          )}
         </dl>
       )}
 
@@ -493,11 +493,3 @@ function DetailPane({
   );
 }
 
-function Stat({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <dt className="text-text-faint text-[11px]">{label}</dt>
-      <dd>{children}</dd>
-    </div>
-  );
-}

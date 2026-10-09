@@ -1,6 +1,8 @@
 # Bulaa design system (Clutch)
 
 > **For AI agents:** Before any UI, page, email, Discord embed, or marketing surface, read this file and import tokens from `tokens.ts` / `tokens.css`. Do not invent alternate palettes, fonts, or radii.
+>
+> **Impeccable / Stitch canonical spec:** [`DESIGN.md`](../../DESIGN.md) at repo root (YAML frontmatter + sidecar `.impeccable/design.json`). This doc stays the quick agent checklist; keep both aligned when tokens change.
 
 ## Locked brand
 

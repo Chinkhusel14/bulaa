@@ -18,6 +18,7 @@ import {
   MATCH_ACCEPT_SECONDS,
   VOTE_COOLDOWN_MS,
   VOTE_MIN_MEMBERS,
+  VOTE_REJOIN_BLOCK_MS,
   VOTE_SECONDS,
   VETO_STEPS,
   lobbyCostMnt,
@@ -27,7 +28,7 @@ import {
   type MapId,
   type Side,
 } from "@bulaa/shared";
-import { and, eq, gt, inArray, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lte, sql } from "drizzle-orm";
 import { AppError } from "../../lib/errors";
 import {
   captains,
@@ -39,6 +40,7 @@ import {
   planLeave,
   planMove,
   planVeto,
+  rejoinBlockActive,
   voteThreshold,
   type AcceptPlan,
   type LobbyMember,
@@ -68,6 +70,7 @@ const ERROR_STATUS: Record<LobbyErrorCode, number> = {
   vote_unavailable: 409,
   vote_cooldown: 409,
   already_voting: 409,
+  rejoin_blocked: 409,
   chat_rate_limited: 429,
   message_too_long: 400,
   not_accepting: 409,
@@ -315,6 +318,21 @@ export async function joinLobby(
       status,
       lobbyCostMnt(lobby.prizePoolMnt, lobby.serverFeeMnt),
     );
+    const [block] = await tx
+      .select({ until: lobbyVotes.rejoinBlockedUntil })
+      .from(lobbyVotes)
+      .where(
+        and(
+          eq(lobbyVotes.lobbyId, lobbyId),
+          eq(lobbyVotes.targetUserId, userId),
+          eq(lobbyVotes.status, "passed"),
+        ),
+      )
+      .orderBy(desc(lobbyVotes.rejoinBlockedUntil))
+      .limit(1);
+    if (rejoinBlockActive(block?.until ?? null, Date.now())) {
+      throw lobbyError("rejoin_blocked");
+    }
     const members = await loadMembers(tx, lobbyId);
     const plan = planJoin(lobby.status, members);
     if (!plan.ok) throw lobbyError(plan.code);
@@ -517,7 +535,6 @@ export async function startVote(
       .where(
         and(
           eq(lobbyVotes.lobbyId, lobbyId),
-          eq(lobbyVotes.targetUserId, targetUserId),
           inArray(lobbyVotes.status, ["passed", "failed"]),
           gt(lobbyVotes.endsAt, new Date(Date.now() - VOTE_COOLDOWN_MS)),
         ),
@@ -586,7 +603,11 @@ export async function castBallot(
 
     await tx
       .update(lobbyVotes)
-      .set({ status: "passed", endsAt: new Date() })
+      .set({
+        status: "passed",
+        endsAt: new Date(),
+        rejoinBlockedUntil: new Date(Date.now() + VOTE_REJOIN_BLOCK_MS),
+      })
       .where(eq(lobbyVotes.id, vote.id));
     await removeMember(tx, lobby, members, vote.targetUserId);
     return true;

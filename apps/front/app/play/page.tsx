@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { LobbyScout } from "@/components/play/lobby-scout";
-import { PlayHeader } from "@/components/play/play-header";
 import { useLobbies } from "@/lib/lobbies";
 import { useAuth } from "@/lib/use-auth";
 
@@ -22,11 +21,11 @@ export default function PlayPage() {
   if (isLoading || !user || user.status === "pending_phone") return null;
 
   return (
-    <div className="bg-void flex min-h-dvh flex-col">
-      <PlayHeader user={user} balanceMnt={lobbies.data?.viewer.balanceMnt ?? null} />
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-        <LobbyScout user={user} data={lobbies.data} isError={lobbies.isError} />
-      </main>
-    </div>
+    <LobbyScout
+      user={user}
+      data={lobbies.data}
+      isError={lobbies.isError}
+      flashIds={lobbies.flashIds}
+    />
   );
 }

@@ -20,7 +20,7 @@ type Step = "prize" | "confirm";
 const PRESETS = [30_000, 50_000, 100_000, 250_000, 500_000] as const;
 
 const STEP_COPY: Record<Step, Copy> = {
-  prize: { mn: "Шагналын сан", en: "Prize pool" },
+  prize: { mn: "Ялагч бүрт", en: "Each winner gets" },
   confirm: { mn: "Баталгаажуулах", en: "Confirm" },
 };
 
@@ -36,7 +36,7 @@ function prizePoolIssue(value: number | null): Copy | null {
           Хамгийн багадаа <Money amount={LOBBY_PRIZE_POOL_MIN_MNT} />.
         </>
       ),
-      en: "Below the minimum prize pool.",
+      en: "Below the minimum winner payout.",
     };
   if (code === "too_big")
     return {
@@ -45,11 +45,11 @@ function prizePoolIssue(value: number | null): Copy | null {
           Хамгийн ихдээ <Money amount={LOBBY_PRIZE_POOL_MAX_MNT} />.
         </>
       ),
-      en: "Above the maximum prize pool.",
+      en: "Above the maximum winner payout.",
     };
   return {
-    mn: `${LOBBY_SEAT_COUNT}-т хуваагдах дүн оруулна уу.`,
-    en: `Use an amount that splits evenly across ${LOBBY_SEAT_COUNT} players.`,
+    mn: "10-ын алхмаар бүхэл дүн оруулна уу.",
+    en: "Use a whole amount in multiples of 10 MNT.",
   };
 }
 
@@ -207,7 +207,7 @@ function PrizeStep({
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-2">
         <span className="text-text-muted text-[13px]">
-          Шагналын сан / Prize pool, MNT
+          Ялагч бүрт / Each winner gets, MNT
         </span>
         <input
           inputMode="numeric"
@@ -249,9 +249,9 @@ function PrizeStep({
         ) : (
           prizePool !== null && (
             <p className="text-text-muted">
-              Тоглогч бүр <Money amount={prizeShareMnt(prizePool)} /> +{" "}
-              <Money amount={serverFeeMnt} /> серверийн төлбөр. Ялагч бүр{" "}
-              <Money amount={winnerPayoutMnt(prizePool)} /> авна.
+              Ялагч бүр <Money amount={winnerPayoutMnt(prizePool)} /> авна. Орох
+              зардал: <Money amount={prizeShareMnt(prizePool)} /> +{" "}
+              <Money amount={serverFeeMnt} /> сервер.
             </p>
           )
         )}
@@ -274,11 +274,8 @@ function ConfirmStep({
   return (
     <div className="flex flex-col gap-4">
       <dl className="flex flex-col gap-2 text-[13px]">
-        <Row label="Шагналын сан / Prize pool">
-          <Money amount={prizePool} className="text-[15px] font-medium" />
-        </Row>
         <Row label="Ялагч бүрт / Each winner gets">
-          <Money amount={winnerPayoutMnt(prizePool)} />
+          <Money amount={prizePool} className="text-[15px] font-medium" />
         </Row>
       </dl>
 

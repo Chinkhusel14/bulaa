@@ -62,3 +62,18 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+@keyframes lobby-row-flash {
+  0% {
+    background-color: var(--primary-muted);
+    border-color: var(--border-strong);
+  }
+  100% {
+    background-color: transparent;
+    border-color: transparent;
+  }
+}
+
+.animate-lobby-flash {
+  animation: lobby-row-flash 700ms ease-out;
+}

@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T13:15:00.000Z",
+  "title": "Design System: Bulaa (Clutch)",
+  "extensions": {
+    "colorMeta": {
+      "void": {
+        "role": "neutral",
+        "displayName": "Void Black",
+        "canonical": "#070809",
+        "tonalRamp": ["#070809", "#0a0c0e", "#0d1013", "#101318", "#14181f", "#1c222c", "#2a3140", "#5c6578"]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Signal Lime",
+        "canonical": "#C8F542",
+        "tonalRamp": ["#3a4a12", "#516818", "#68801e", "#7f9824", "#96b02a", "#adc832", "#c8f542", "#d6ff66"]
+      },
+      "money": {
+        "role": "tertiary",
+        "displayName": "Money Gold",
+        "canonical": "#FFE66B",
+        "tonalRamp": ["#4a4018", "#665820", "#827028", "#9e8830", "#baa038", "#d6b840", "#ffe66b", "#fff0a3"]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Link Blue",
+        "canonical": "#6B9BFF",
+        "tonalRamp": ["#1a3058", "#254078", "#305098", "#3b60b8", "#4670d8", "#5180f8", "#6b9bff", "#9bb8ff"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Brand and page titles; Chakra Petch bold."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default UI copy and button labels at 15px."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Tier labels, seat counts, IDs."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "pick-snap",
+        "value": "120ms",
+        "purpose": "Seat and side selection snap."
+      },
+      {
+        "name": "pick-flash",
+        "value": "200ms",
+        "purpose": "Lime flash on Ready."
+      },
+      {
+        "name": "fade",
+        "value": "150ms",
+        "purpose": "Generic opacity/color transitions on buttons."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Single go-action per view — Join, Ready, Continue.",
+      "html": "<button type=\"button\" class=\"ds-btn-primary\">Join</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 2.5rem; padding: 0 1rem; font-family: var(--font-body); font-size: 0.9375rem; font-weight: 500; color: var(--on-primary); background: var(--primary); border: none; border-radius: var(--radius-md); cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: var(--primary-hover); } .ds-btn-primary:focus-visible { outline: 2px solid var(--border-strong); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Create lobby, cancel, non-primary actions.",
+      "html": "<button type=\"button\" class=\"ds-btn-secondary\">Create lobby</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; height: 2.5rem; padding: 0 1rem; font-family: var(--font-body); font-size: 0.9375rem; font-weight: 500; color: var(--text); background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: background 150ms ease; } .ds-btn-secondary:hover { background: var(--bg-overlay); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--border-strong); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Icon-only or low-emphasis header actions.",
+      "html": "<button type=\"button\" class=\"ds-btn-ghost\" aria-label=\"Sign out\"><span class=\"ds-btn-ghost-icon\">↪</span></button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--text); background: transparent; border: none; border-radius: var(--radius-md); cursor: pointer; transition: background 150ms ease; } .ds-btn-ghost:hover { background: var(--bg-overlay); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--border-strong); outline-offset: 2px; }"
+    },
+    {
+      "name": "Money Amount",
+      "kind": "custom",
+      "refersTo": "money",
+      "description": "Wallet balance and prize pool figures.",
+      "html": "<span class=\"ds-money\">₮ 500,000</span>",
+      "css": ".ds-money { color: var(--money); font-family: var(--font-body); font-size: 0.9375rem; font-weight: 500; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Tier Badge",
+      "kind": "chip",
+      "refersTo": "tier-pro",
+      "description": "Average tier on lobby rows; bar color follows band.",
+      "html": "<span class=\"ds-tier-badge\"><span class=\"ds-tier-bar ds-tier-pro\" aria-hidden=\"true\"></span><span class=\"ds-tier-label\">1-1</span></span>",
+      "css": ".ds-tier-badge { display: inline-flex; align-items: center; gap: 0.5rem; } .ds-tier-bar { width: 3px; height: 1rem; border-radius: var(--radius-sm); } .ds-tier-pro { background: var(--tier-pro); } .ds-tier-mid { background: var(--tier-mid); } .ds-tier-low { background: var(--tier-low); } .ds-tier-label { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--text); white-space: nowrap; }"
+    },
+    {
+      "name": "Seat Meter",
+      "kind": "custom",
+      "refersTo": "primary",
+      "description": "10-segment occupancy and ready visualization.",
+      "html": "<span class=\"ds-seat-meter\" role=\"img\" aria-label=\"7 of 10 players, 5 of 10 ready\"><span class=\"ds-seat ready\"></span><span class=\"ds-seat ready\"></span><span class=\"ds-seat joined\"></span><span class=\"ds-seat open\"></span><span class=\"ds-seat open\"></span><span class=\"ds-seat open\"></span><span class=\"ds-seat open\"></span><span class=\"ds-seat open\"></span><span class=\"ds-seat open\"></span><span class=\"ds-seat open\"></span></span>",
+      "css": ".ds-seat-meter { display: inline-flex; gap: 2px; } .ds-seat { width: 6px; height: 12px; border-radius: var(--radius-sm); } .ds-seat.ready { background: var(--primary); } .ds-seat.joined { background: var(--text-muted); } .ds-seat.open { background: var(--bg-overlay); }"
+    },
+    {
+      "name": "Play Header Strip",
+      "kind": "nav",
+      "refersTo": "void",
+      "description": "In-app chrome above lobby browser.",
+      "html": "<header class=\"ds-play-header\"><div class=\"ds-play-header-inner\"><a href=\"/\" class=\"ds-brand\">Bulaa</a><span class=\"ds-play-label\">Play</span><span class=\"ds-money\">₮ 500,000</span></div></header>",
+      "css": ".ds-play-header { border-bottom: 1px solid var(--border); background: var(--bg-void); } .ds-play-header-inner { max-width: 64rem; margin: 0 auto; height: 3.5rem; display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; gap: 1rem; } .ds-brand { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--text); text-decoration: none; letter-spacing: -0.02em; } .ds-brand:hover { color: var(--primary); } .ds-play-label { font-family: var(--font-display); font-size: 0.9375rem; font-weight: 600; color: var(--text-muted); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clutch Terminal",
+    "overview": "Bulaa looks like a night-shift ops desk for paid CS2 lobbies: void-black canvas, flat raised panels, and a single lime channel for actions that move money or match state forward. The UI is competitive and impatient—short labels, mono for counts and IDs, gold tabular figures for MNT—not a casino floor with neon stacks or jackpot theatrics.",
+    "keyCharacteristics": [
+      "Flat depth via background steps, not drop shadows",
+      "Lime primary for one CTA per view; blue accent for links",
+      "Money gold reserved for MNT with tabular numerals",
+      "Sharp 4–6px radii; tier badges use left accent bar",
+      "MN + EN; Chakra Petch + IBM Plex"
+    ],
+    "rules": [
+      {
+        "name": "The One Primary Rule",
+        "body": "At most one lime primary CTA per view.",
+        "section": "colors"
+      },
+      {
+        "name": "The Money Lane Rule",
+        "body": "Wallet and prize pool amounts use money with tabular nums. Never lime text on yellow/gold chips.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "No card chrome in heroes. No glow stacks on CTAs. Shadows are not part of the core vocabulary.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Cyrillic Rule",
+        "body": "MN strings must render cleanly; do not substitute Inter, Roboto, or Arial as primary UI fonts.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do import @bulaa/design/tokens.css once at app root.",
+      "Do use tabular-money for all MNT displays.",
+      "Do keep copy short and imperative.",
+      "Do use success / danger for win/loss.",
+      "Do say players joined or are in the lobby."
+    ],
+    "donts": [
+      "Don't ship a light theme or purple brand accents.",
+      "Don't use casino language or visuals.",
+      "Don't use Find Match or draft as primary product verbs.",
+      "Don't invent new brand hex colors.",
+      "Don't stack multiple lime primary buttons on one screen."
+    ]
+  }
+}

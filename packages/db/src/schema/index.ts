@@ -164,6 +164,7 @@ export const lobbyVotes = pgTable("lobby_votes", {
     .references(() => users.id),
   status: lobbyVoteStatusEnum("status").notNull().default("open"),
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  rejoinBlockedUntil: timestamp("rejoin_blocked_until", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

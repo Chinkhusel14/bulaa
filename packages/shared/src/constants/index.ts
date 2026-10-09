@@ -45,6 +45,7 @@ export const ACCOUNT_STATUSES = [
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 
 export const LOBBY_SEAT_COUNT = 10;
+export const LOBBY_WINNER_COUNT = LOBBY_SEAT_COUNT / 2;
 
 export const SIDE_SIZE = 5;
 
@@ -90,6 +91,8 @@ export const CHAT_RATE_WINDOW_MS = 10_000;
 
 export const VOTE_SECONDS = 30;
 export const VOTE_COOLDOWN_MS = 120_000;
+/** After a passed vote, the target cannot rejoin that lobby until this elapses. */
+export const VOTE_REJOIN_BLOCK_MS = 30 * 60 * 1000;
 export const VOTE_MIN_MEMBERS = 3;
 
 export const ACTIVE_LOBBY_STATUSES = [
@@ -104,18 +107,23 @@ export function lobbyRoomChannel(lobbyId: string): string {
   return `lobby:${lobbyId}`;
 }
 
-/** Host-chosen prize pool bounds for one lobby (MNT, whole match). */
+/** Host-chosen payout per winner (MNT). Five winners each receive this amount. */
 export const LOBBY_PRIZE_POOL_MIN_MNT = 30_000;
 export const LOBBY_PRIZE_POOL_MAX_MNT = 500_000;
 
-/** Each player funds an equal share of the prize pool. */
+/** Each player's escrow share toward the five winner payouts. */
 export function prizeShareMnt(prizePoolMnt: number): number {
-  return prizePoolMnt / LOBBY_SEAT_COUNT;
+  return (prizePoolMnt * LOBBY_WINNER_COUNT) / LOBBY_SEAT_COUNT;
 }
 
-/** Each of the five winners takes an equal share of the prize pool. */
+/** Stored prize pool is the per-winner payout. */
 export function winnerPayoutMnt(prizePoolMnt: number): number {
-  return prizePoolMnt / (LOBBY_SEAT_COUNT / 2);
+  return prizePoolMnt;
+}
+
+/** Total paid to all five winners combined. */
+export function totalWinnerPayoutMnt(prizePoolMnt: number): number {
+  return prizePoolMnt * LOBBY_WINNER_COUNT;
 }
 
 /** Wallet balance a player needs to create or join a lobby. */
@@ -145,6 +153,7 @@ export const LOBBY_ERROR_CODES = [
   "vote_unavailable",
   "vote_cooldown",
   "already_voting",
+  "rejoin_blocked",
   "chat_rate_limited",
   "message_too_long",
   "not_accepting",

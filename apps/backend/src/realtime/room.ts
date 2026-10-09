@@ -27,8 +27,12 @@ export async function registerRoomWs(app: FastifyInstance) {
       return;
     }
     for (const entry of sockets) {
-      if (entry.socket.readyState === entry.socket.OPEN) {
-        entry.socket.send(roomMessage(personalizeRoom(core, entry.userId)));
+      if (entry.socket.readyState !== entry.socket.OPEN) continue;
+      const stillHere = core.room.players.some((player) => player.userId === entry.userId);
+      entry.socket.send(roomMessage(personalizeRoom(core, entry.userId)));
+      if (!stillHere) {
+        set.delete(entry);
+        entry.socket.close(1008);
       }
     }
   });

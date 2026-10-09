@@ -22,7 +22,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Providers>{children}</Providers>
-      </body>
+      {/* impeccable-live-start */}
+<script src="http://localhost:8400/live.js?token=f7df5d65-a6aa-4cf3-811d-34d22dd7ec3e"></script>
+{/* impeccable-live-end */}
+</body>
     </html>
   );
 }

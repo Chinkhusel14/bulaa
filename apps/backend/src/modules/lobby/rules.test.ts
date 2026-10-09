@@ -20,6 +20,7 @@ import {
   planPlacement,
   planVeto,
   tierForMmr,
+  rejoinBlockActive,
   voteThreshold,
   type LobbyMember,
 } from "./rules";
@@ -92,13 +93,14 @@ describe("averageTier", () => {
 });
 
 describe("prize pool money", () => {
-  it("splits the pool into ten shares and five winner payouts", () => {
-    assert.equal(prizeShareMnt(500_000), 50_000);
-    assert.equal(winnerPayoutMnt(500_000), 100_000);
-    assert.equal(lobbyCostMnt(30_000, 5_000), 8_000);
+  it("treats prize pool as each winner payout and splits entry across ten players", () => {
+    assert.equal(winnerPayoutMnt(50_000), 50_000);
+    assert.equal(prizeShareMnt(50_000), 25_000);
+    assert.equal(lobbyCostMnt(30_000, 5_000), 20_000);
+    assert.equal(lobbyCostMnt(50_000, 5_000), 30_000);
   });
 
-  it("accepts 30,000 to 500,000 MNT in whole shares only", () => {
+  it("accepts 30,000 to 500,000 MNT per winner in multiples of 10", () => {
     assert.equal(prizePoolMntSchema.safeParse(30_000).success, true);
     assert.equal(prizePoolMntSchema.safeParse(500_000).success, true);
     assert.equal(prizePoolMntSchema.safeParse(29_990).success, false);
@@ -474,5 +476,18 @@ describe("voteThreshold", () => {
   it("is 6 for 10 members and 2 for 3 members", () => {
     assert.equal(voteThreshold(10), 6);
     assert.equal(voteThreshold(3), 2);
+  });
+});
+
+describe("rejoinBlockActive", () => {
+  const now = Date.parse("2026-10-10T00:00:00.000Z");
+
+  it("blocks while the window is still open", () => {
+    assert.equal(rejoinBlockActive(new Date(now + 60_000), now), true);
+  });
+
+  it("allows a join once the window has passed", () => {
+    assert.equal(rejoinBlockActive(new Date(now - 1), now), false);
+    assert.equal(rejoinBlockActive(null, now), false);
   });
 });

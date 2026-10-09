@@ -198,6 +198,11 @@ export function voteThreshold(memberCount: number): number {
   return Math.ceil((memberCount - 1) / 2) + 1;
 }
 
+/** A passed vote blocks rejoining that lobby until `until`. */
+export function rejoinBlockActive(until: Date | null, nowMs: number): boolean {
+  return until !== null && until.getTime() > nowMs;
+}
+
 export function canOpenAccept(members: readonly LobbyMember[]): boolean {
   return (
     members.length === LOBBY_SEAT_COUNT &&
