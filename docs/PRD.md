@@ -21,7 +21,7 @@ todos:
     content: Build the lobby browser - list, create, join, occupancy n/10, ready count, average displayed tier
     status: pending
   - id: build_lobby_ready
-    content: Build the lobby room - 10 seats, Team A/Team B sides, Ready toggle, host Start, host transfer
+    content: Build the lobby room - packed Team A/Team B sides, Ready toggle, all-player Accept, captain ban/pick, host transfer
     status: pending
   - id: build_lobby_chat
     content: Build member-only lobby text chat with rate limiting and freeze on match start
@@ -101,7 +101,7 @@ These three items materially affect product viability and must be tracked as blo
 
 - **Solo Player (Бат)**: Lower-group player, plays at night, scans the lobby list by average rank and joins one that looks fair
 - **Stack Player (Ану + 2 нөхөр)**: Upper-group player, creates a lobby or joins one with friends, sorts out sides in lobby chat
-- **Host**: The player who created the lobby. Assigns Team A and Team B, and presses Start once all 10 seats are Ready. Not a skill role
+- **Host**: The player shown on the lobby card. They created the lobby, or inherited it after the previous host left or was kicked. They do not assign sides and they do not press Start. Not a skill role
 - **Match Admin**: Confirms winner, handles in-match disputes, subs in players, closes abusive lobbies
 - **Finance Admin**: Approves manual deposits (edge cases), triggers payouts, reviews refund tickets
 - **Super Admin**: Manages roles, server contracts, system config
@@ -117,8 +117,9 @@ flowchart TD
     Pick --> Join["Join a seat - wallet locks prize share (pool / 10) + 5k server fee"]
     Join --> Lobby["Chat, take a side, press Ready"]
     Lobby --> AllReady["10/10 Ready and 5+5 sides"]
-    AllReady --> Start[Host presses Start]
-    Start --> ServerReady[Admin allocates Mongolian CS2 server, posts connect info]
+    AllReady --> Accept["All 10 Accept"]
+    Accept --> Veto["Captains ban and pick maps"]
+    Veto --> ServerReady[Admin allocates Mongolian CS2 server, posts connect info]
     ServerReady --> Match[Players play 5v5 match]
     Match --> Scores[Each side submits the final score]
     Scores --> AdminConfirm[Admin confirms winner]
@@ -158,7 +159,7 @@ flowchart TD
   2. On a successful join, `escrow_hold(cost)` for that player
   3. If the hold fails, deny the join and tell the player their balance dropped
   4. When a player leaves, or a vote kick removes them, `escrow_release(cost)`
-  5. On Start, all 10 holds stay in place until the result is settled
+  5. After all 10 Accept, all 10 holds stay in place until the result is settled
   6. On admin-confirmed result: `escrow_capture(cost)` for all 10, then `payout_credit(P / 5)` to each of the 5 winners
 - Limits (configurable, sensible defaults):
   - Min deposit: 10,000 MNT
@@ -183,25 +184,26 @@ flowchart TD
 - Create a lobby: any `active` player whose wallet covers the cost. Create opens a modal wizard with two steps:
   1. Prize pool: the host enters an amount or picks a preset, and sees their share, the server fee, and the winner payout
   2. Confirm: prize pool, winner payout, your share, the server fee (read-only), the total cost, and the wallet balance before and after
-- The creator becomes the host and takes seat 1.
+- The creator becomes the host and joins Team A in slot 0.
 - Join a lobby: same balance and account-state check. Join is blocked once 10 seats are taken.
-- A player can be in one lobby at a time. Creating or joining a second one is blocked until they leave the first.
-- Leaving is free while the lobby is `open`. The seat reopens and escrow is released.
+- A player can be in one lobby at a time. `open`, `accepting`, `veto`, and `awaiting_server` all count. Creating or joining a second one is blocked until they leave the first.
+- Leaving is free while the lobby is `open` or `accepting`. The slot reopens, that side packs, and escrow is released. Leave during `veto` is rejected.
 - If the host leaves, the member who joined earliest becomes host. If the last member leaves, the lobby closes.
 
-### 6.4 Lobby room, sides, Ready, and Start
+### 6.4 Lobby room, sides, Ready, Accept, and ban/pick
 
-- The lobby room shows all 10 seats, each with the player name and displayed tier, the current sides, and who is Ready.
-- Players sort out teams themselves. Chat is the coordination tool (6.5).
-- The host can assign each member to Team A or Team B. Sides are valid at 5 and 5.
-- Each player in the lobby toggles Ready. A player can go back to not-Ready at any time before Start.
-- Host Start is enabled only when all three hold:
-  1. 10 seats are taken
-  2. All 10 players are Ready
-  3. Sides are 5 and 5
-- The host is the only player who can press Start. Auto-start is out of MVP.
-- If the lobby has been at 10/10 Ready for longer than the idle limit (default 3 minutes, configurable) and the host has not pressed Start, the host seat transfers to the member who joined earliest. Members can also vote the host out (6.6).
-- On Start the lobby moves to `starting`, then to `awaiting_server` (6.7). Seats, sides, and Ready flags are frozen from `starting` onward.
+- After create or join, the player opens the lobby room at `/play/[lobbyId]`.
+- While the lobby is `open` or `accepting`, the room is Team A on the left, chat in the center, and Team B on the right. Each side has five slots. Members pack to the top of their column. Empty slots sit only under the last member.
+- A player moves themself by clicking an empty slot on the other side. That appends them to the target side and packs the side they left. A move onto a side that already has 5 is rejected. New joiners take the side with fewer players. A tie goes to Team A. The creator is Team A slot 0.
+- Each player toggles Ready while the lobby is `open`. There is no Start button. The host stays `hostUserId` on the card and still transfers when they leave or are kicked.
+- When all 10 are Ready and sides are 5 and 5, the lobby moves to `accepting` and starts a 30 second accept window (`MATCH_ACCEPT_SECONDS`). All 10 must Accept.
+- Accept sets that member's accepted flag. When all 10 have accepted, status becomes `veto`, captains act, and the leftover map is the decider. Team A acts first. The captain of a side is the member on that side who joined earliest, then the lowest slot, then `userId`.
+- Ban/pick sequence on the seven-map pool (Ancient, Anubis, Dust II, Inferno, Mirage, Nuke, Train): A ban, B ban, A pick, B pick, A ban, B ban, leftover map is the decider. There is no CT/T choice. Knife happens on the server.
+- If a captain does not act within 30 seconds (`DRAFT_PICK_SECONDS`), the server applies a random remaining map for that step. The decider is assigned in the same step when it is next.
+- Decline sets Ready to false for the player who declined, and for every member who has not accepted. The accept timer does the same for members who have not accepted. Both clear accepted flags and return status to `open`. Members who already accepted, and did not decline, stay Ready.
+- Leave, kick, or a successful side move while `accepting` also returns status to `open` and clears accepted flags. That path does not unready anyone.
+- During `veto` the roster, sides, and Ready flags are frozen. Leave and side move are rejected. Vote kick is unavailable. Chat still works.
+- After the seven map steps, status becomes `awaiting_server` (6.7). `starting` is not used on this path.
 
 ### 6.5 Lobby chat
 
@@ -209,7 +211,7 @@ flowchart TD
 - Chat exists for the coordination work: calling sides, swapping players to balance tiers, agreeing on a map, waiting on a friend.
 - Rate limit per player (configurable defaults): 5 messages per 10 seconds, 300 characters per message.
 - No in-platform voice in MVP. Players keep using Discord voice.
-- Messages persist while the lobby is `open`. When the lobby closes, the messages are deleted. When the match goes live, the chat freezes and the transcript moves to the match log for dispute review.
+- Chat stays open while the lobby is `open`, `accepting`, `veto`, or `awaiting_server`. It is rejected once status is `live` or later. When the lobby closes, the messages are deleted. When the match goes live, the transcript moves to the match log for dispute review.
 
 ### 6.6 Vote kick
 
@@ -224,12 +226,12 @@ Some players take a seat and never press Ready, which blocks the other 9. Vote k
 - If the target sat not-Ready for more than 2 minutes before the vote passed, their behavior score takes a small hit (6.11).
 - If the target was the host, the host seat transfers to the remaining member who joined earliest.
 - A kicked player can join another lobby right away.
-- Vote kick is only available while the lobby is `open`. After Start, a missing player is a no-show and a Match Admin handles it.
+- Vote kick is only available while the lobby is `open` or `accepting`. A kick during `accepting` cancels the accept prompt back to `open` without unreadies anyone. During `veto` and later, a missing player is a no-show and a Match Admin handles it.
 
 ### 6.7 Server Allocation and Match Lifecycle (MVP: manual)
 
 - MVP: admin sees a list of matches waiting for a server and assigns one of the contracted Mongolian CS2 servers, then pastes connect info (`ip:port` and password) into the match.
-- Lobby and match state machine: `open` -> `starting` -> `awaiting_server` -> `live` -> `awaiting_result` -> `completed` | `cancelled` | `disputed`.
+- Lobby and match state machine: `open` -> `accepting` -> `veto` -> `awaiting_server` -> `live` -> `awaiting_result` -> `completed` | `cancelled` | `disputed`. `starting` is not used on this path.
 - Ready is a flag on each lobby member while the lobby is `open`. It is not a state of the lobby.
 - Each match has: roster of 10 players, team assignments, host, server info, start time, expected duration (~60 min), and a unique `match_id`.
 - v2: integrate with Mongolian server provider API to spin up servers, apply config, and push the roster automatically.
@@ -261,7 +263,7 @@ Mandatory in MVP:
 - Minimum Steam account age and CS2 hours (see 6.1)
 - One verified phone = one account
 - Auto-record GOTV demo for every match, stored 30 days
-- Internal **trust factor / behavior score** (0-100, starts at 80). It drops on leavers, confirmed reports, sitting not-Ready until vote-kicked, no-shows after Start, and admin warnings.
+- Internal **trust factor / behavior score** (0-100, starts at 80). It drops on leavers, confirmed reports, sitting not-Ready until vote-kicked, no-shows after server-ready, and admin warnings.
 - Restrictions at a score below 50, kept deliberately simple: the Create button is hidden, and joins are limited to lobbies whose average tier is close to the player's own tier. Bans at a score below 20.
 
 Recommended additional anti-cheat (flagged for MVP-or-soon-after decision):
@@ -280,7 +282,7 @@ Recommended additional anti-cheat (flagged for MVP-or-soon-after decision):
 Default policy (automated strict):
 
 - **Sat not-Ready and got vote-kicked** (not-Ready for more than 2 minutes before the vote passed): escrow released in full, behavior score -5
-- **No-show after Start** (failed to connect within 10 min of server-ready): player loses entry fee, their side plays 4v5 or forfeits at the choice of the remaining four, behavior score -10
+- **No-show after server-ready** (failed to connect within 10 min of server-ready): player loses entry fee, their side plays 4v5 or forfeits at the choice of the remaining four, behavior score -10
 - **Mid-match rage-quit** (left without returning for 3 consecutive rounds): treated as a forfeit by their side, behavior score -15
 - **Server crash before round 6**: full refund to all 10, no MMR change
 - **Server crash after round 6**: leading side gets winner payout. If tied, full refund.
@@ -333,7 +335,7 @@ Recommendation (skipped by stakeholder, proposing default):
 - Modules are named after the lobby, not after a queue or a draft. The play path is `lobby`.
 - DB: Postgres (Supabase or managed) for relational data + ledger. Redis for live lobby state and pub/sub.
 - Auth: Steam OpenID for primary login, Discord OAuth for optional link, SMS OTP for phone verification (Mongolian SMS provider TBD, flag)
-- Realtime: WebSockets carry the lobby list, seat changes, side assignment, Ready flags, chat, and vote kick. Redis pub/sub fans those channels out across backend instances. Server-Sent Events are the fallback for the read-only lobby list.
+- Realtime: WebSockets carry the lobby list, side and slot changes, Ready flags, Accept, ban/pick, chat, and vote kick. Redis pub/sub fans those channels out across backend instances. Server-Sent Events are the fallback for the read-only lobby list.
 - Payments: QPay webhook integration, with a payment provider abstraction so additional Mongolian providers can be added
 - Server allocation in MVP: admin panel UI only. v2 adds provider-specific adapters behind a common interface.
 - Anti-cheat data: Steam Web API client cached in Redis with weekly refresh
@@ -345,7 +347,7 @@ In MVP:
 - Steam + phone signup, VAC/game-ban + account-age checks
 - Wallet model with QPay deposits, escrow per seat, automatic credit on result confirm
 - Lobby browser with create, join, occupancy, ready count, and average displayed tier
-- Lobby room with 10 seats, Team A/Team B sides, Ready toggle, host Start, host transfer
+- Lobby room with packed Team A/Team B sides, Ready toggle, all-player Accept, captain ban/pick, host transfer
 - Member-only lobby text chat
 - Vote kick with majority threshold and per-target cooldown
 - Manual server allocation by Match Admin
@@ -359,7 +361,7 @@ In MVP:
 Explicitly Out of MVP (deferred):
 
 - Automated match result detection (R3, top priority post-MVP)
-- Auto-start when all 10 seats are Ready. The host stays the start actor in MVP.
+- Host Start. All 10 Accept is the gate. The host is not the actor who begins the match.
 - Hard rank gates on joining a lobby. Average rank stays informational.
 - Automated server provisioning via provider API
 - In-platform voice chat
@@ -378,14 +380,14 @@ Explicitly Out of MVP (deferred):
 4. Seasons with periodic MMR soft-reset + cosmetic rewards
 5. Optional 3rd-party anti-cheat client requirement
 6. Tournament mode (single/double elim brackets)
-7. Auto-start once all 10 seats are Ready, so a lobby no longer waits on the host
+7. Server-side match connect after `awaiting_server`, so a lobby no longer waits on a Match Admin to paste connect info
 
 ## 11. Success Metrics
 
 - Activation: phone-verified accounts / Steam signups, target 60%
 - Liquidity: avg matches/day, target 15 by month 2 (vs. 5-8 today)
 - Lobby fill: % of created lobbies that reach 10/10 Ready and start, target >60%
-- Start friction: median minutes from lobby creation to Start, target under 10
+- Accept friction: median minutes from lobby creation to all 10 Accept, target under 10
 - Admin load: admin-minutes per match, target under 3 min (vs. ~15 today)
 - Wallet retention: % of payouts that stay in wallet (re-played) vs. withdrawn, higher is better
 - Behavior: % of matches with no leavers, target >85%

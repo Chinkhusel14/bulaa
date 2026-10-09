@@ -67,13 +67,25 @@ export const ledgerEntries = pgTable("ledger_entries", {
 
 export const lobbyStatusEnum = pgEnum("lobby_status", [
   "open",
+  "accepting",
   "starting",
+  "veto",
   "awaiting_server",
   "live",
   "awaiting_result",
   "completed",
   "cancelled",
   "disputed",
+]);
+
+export const lobbySideEnum = pgEnum("lobby_side", ["a", "b"]);
+
+export const lobbyMapActionEnum = pgEnum("lobby_map_action", ["ban", "pick", "decider"]);
+
+export const lobbyVoteStatusEnum = pgEnum("lobby_vote_status", [
+  "open",
+  "passed",
+  "failed",
 ]);
 
 export const lobbies = pgTable("lobbies", {
@@ -84,6 +96,8 @@ export const lobbies = pgTable("lobbies", {
     .notNull()
     .references(() => users.id),
   status: lobbyStatusEnum("status").notNull().default("open"),
+  phaseDeadline: timestamp("phase_deadline", { withTimezone: true }),
+  vetoStep: integer("veto_step").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -97,12 +111,72 @@ export const lobbyMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    seat: integer("seat").notNull(),
+    side: lobbySideEnum("side").notNull(),
+    slot: integer("slot").notNull(),
     ready: boolean("ready").notNull().default(false),
+    accepted: boolean("accepted").notNull().default(false),
     joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     unique("lobby_members_lobby_user_unique").on(t.lobbyId, t.userId),
-    unique("lobby_members_lobby_seat_unique").on(t.lobbyId, t.seat),
+    unique("lobby_members_lobby_side_slot_unique").on(t.lobbyId, t.side, t.slot),
   ],
+);
+
+export const lobbyMapActions = pgTable(
+  "lobby_map_actions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    lobbyId: uuid("lobby_id")
+      .notNull()
+      .references(() => lobbies.id),
+    step: integer("step").notNull(),
+    map: text("map").notNull(),
+    action: lobbyMapActionEnum("action").notNull(),
+    side: lobbySideEnum("side"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [unique("lobby_map_actions_lobby_step_unique").on(t.lobbyId, t.step)],
+);
+
+export const lobbyMessages = pgTable("lobby_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  lobbyId: uuid("lobby_id")
+    .notNull()
+    .references(() => lobbies.id),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const lobbyVotes = pgTable("lobby_votes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  lobbyId: uuid("lobby_id")
+    .notNull()
+    .references(() => lobbies.id),
+  targetUserId: uuid("target_user_id")
+    .notNull()
+    .references(() => users.id),
+  startedBy: uuid("started_by")
+    .notNull()
+    .references(() => users.id),
+  status: lobbyVoteStatusEnum("status").notNull().default("open"),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const lobbyVoteBallots = pgTable(
+  "lobby_vote_ballots",
+  {
+    voteId: uuid("vote_id")
+      .notNull()
+      .references(() => lobbyVotes.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    yes: boolean("yes").notNull(),
+  },
+  (t) => [unique("lobby_vote_ballots_vote_user_unique").on(t.voteId, t.userId)],
 );

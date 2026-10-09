@@ -59,7 +59,7 @@ export const colors = {
 
 export type BrandColor = keyof typeof colors;
 
-/** Draft timer thresholds (seconds remaining). */
+/** Countdown thresholds (seconds remaining). */
 export const timer = {
   warningAt: 10,
   dangerAt: 5,

@@ -1,8 +1,11 @@
 import { z } from "zod";
 import {
+  CHAT_MAX_LENGTH,
   LOBBY_PRIZE_POOL_MAX_MNT,
   LOBBY_PRIZE_POOL_MIN_MNT,
   LOBBY_SEAT_COUNT,
+  MAP_POOL,
+  SIDES,
 } from "../constants/index";
 
 export const steamIdSchema = z.string().regex(/^7656119\d{10}$/, "Invalid SteamID64");
@@ -131,4 +134,93 @@ export interface LobbyListResponse {
 export interface LobbySnapshotMessage {
   type: "snapshot";
   lobbies: LobbySummary[];
+}
+
+export const lobbyIdResponseSchema = z.object({
+  ok: z.literal(true),
+  lobbyId: z.string().uuid(),
+});
+
+export type LobbyIdResponse = z.infer<typeof lobbyIdResponseSchema>;
+
+export const lobbySideSchema = z.enum(SIDES);
+export const setReadySchema = z.object({ ready: z.boolean() });
+export const chatMessageSchema = z.object({
+  body: z.string().min(1).max(CHAT_MAX_LENGTH),
+});
+export const startVoteSchema = z.object({ targetUserId: z.string().uuid() });
+export const voteBallotSchema = z.object({ yes: z.boolean() });
+export const vetoMapSchema = z.object({ map: z.enum(MAP_POOL) });
+export const moveSideSchema = z.object({ side: lobbySideSchema });
+
+export type LobbyStatus =
+  | "open"
+  | "accepting"
+  | "starting"
+  | "veto"
+  | "awaiting_server"
+  | "live"
+  | "awaiting_result"
+  | "completed"
+  | "cancelled"
+  | "disputed";
+
+export interface LobbyRoomPlayer {
+  userId: string;
+  steamId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  tier: string;
+  tierBand: TierBand;
+  side: z.infer<typeof lobbySideSchema>;
+  slot: number;
+  ready: boolean;
+  accepted: boolean;
+  host: boolean;
+  captain: boolean;
+  joinedAt: string;
+}
+
+export interface LobbyRoomChatMessage {
+  id: string;
+  userId: string;
+  displayName: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface LobbyRoomVote {
+  id: string;
+  targetUserId: string;
+  yesCount: number;
+  noCount: number;
+  threshold: number;
+  endsAt: string;
+  myBallot: boolean | null;
+}
+
+export interface LobbyRoomMapAction {
+  step: number;
+  map: (typeof MAP_POOL)[number];
+  action: "ban" | "pick" | "decider";
+  side: z.infer<typeof lobbySideSchema> | null;
+}
+
+export interface LobbyRoom {
+  id: string;
+  status: LobbyStatus;
+  prizePoolMnt: number;
+  serverFeeMnt: number;
+  phaseDeadline: string | null;
+  vetoStep: number;
+  players: LobbyRoomPlayer[];
+  messages: LobbyRoomChatMessage[];
+  vote: LobbyRoomVote | null;
+  mapActions: LobbyRoomMapAction[];
+  viewerUserId: string;
+}
+
+export interface LobbyRoomMessage {
+  type: "room";
+  room: LobbyRoom;
 }

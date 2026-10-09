@@ -1,4 +1,4 @@
-/** Captain draft pick timer (seconds). */
+/** Captain ban/pick timer (seconds). */
 export const DRAFT_PICK_SECONDS = 30;
 
 /** Match accept window (seconds). */
@@ -46,6 +46,64 @@ export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 
 export const LOBBY_SEAT_COUNT = 10;
 
+export const SIDE_SIZE = 5;
+
+export const SIDES = ["a", "b"] as const;
+export type Side = (typeof SIDES)[number];
+
+export const MAP_POOL = [
+  "ancient",
+  "anubis",
+  "dust2",
+  "inferno",
+  "mirage",
+  "nuke",
+  "train",
+] as const;
+export type MapId = (typeof MAP_POOL)[number];
+
+export const MAP_DISPLAY_NAMES: Record<MapId, string> = {
+  ancient: "Ancient",
+  anubis: "Anubis",
+  dust2: "Dust II",
+  inferno: "Inferno",
+  mirage: "Mirage",
+  nuke: "Nuke",
+  train: "Train",
+};
+
+export const VETO_STEPS = [
+  { side: "a", action: "ban" },
+  { side: "b", action: "ban" },
+  { side: "a", action: "pick" },
+  { side: "b", action: "pick" },
+  { side: "a", action: "ban" },
+  { side: "b", action: "ban" },
+  { action: "decider" },
+] as const;
+
+export type VetoStep = (typeof VETO_STEPS)[number];
+
+export const CHAT_MAX_LENGTH = 300;
+export const CHAT_RATE_COUNT = 5;
+export const CHAT_RATE_WINDOW_MS = 10_000;
+
+export const VOTE_SECONDS = 30;
+export const VOTE_COOLDOWN_MS = 120_000;
+export const VOTE_MIN_MEMBERS = 3;
+
+export const ACTIVE_LOBBY_STATUSES = [
+  "open",
+  "accepting",
+  "veto",
+  "awaiting_server",
+] as const;
+export type ActiveLobbyStatus = (typeof ACTIVE_LOBBY_STATUSES)[number];
+
+export function lobbyRoomChannel(lobbyId: string): string {
+  return `lobby:${lobbyId}`;
+}
+
 /** Host-chosen prize pool bounds for one lobby (MNT, whole match). */
 export const LOBBY_PRIZE_POOL_MIN_MNT = 30_000;
 export const LOBBY_PRIZE_POOL_MAX_MNT = 500_000;
@@ -78,6 +136,18 @@ export const LOBBY_ERROR_CODES = [
   "lobby_closed",
   "not_in_lobby",
   "invalid_prize_pool",
+  "side_full",
+  "same_side",
+  "roster_frozen",
+  "not_captain",
+  "not_your_turn",
+  "map_taken",
+  "vote_unavailable",
+  "vote_cooldown",
+  "already_voting",
+  "chat_rate_limited",
+  "message_too_long",
+  "not_accepting",
 ] as const;
 
 export type LobbyErrorCode = (typeof LOBBY_ERROR_CODES)[number];
